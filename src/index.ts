@@ -7,9 +7,10 @@ import http from 'http';
 
 const app = express();
 const server = http.createServer(app);
+const CORS_ORIGIN = 'http://localhost:3000';
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:3000',
+    origin: CORS_ORIGIN,
     methods: ['GET', 'POST']
   }
 });
@@ -18,14 +19,13 @@ const PORT = process.env.PORT || 4000;
 io.on('connection', (socket: Socket) => {
   console.log('connected');
 
-  socket.on('new-message', message => {
-    console.log(message);
-    socket.broadcast.emit('message', { message, sender: socket.id });
+  socket.on('new-message', obj => {
+    socket.broadcast.emit('message', obj);
   });
 });
 
 app.use(morgan('dev'));
-app.use(cors({ origin: 'http://localhost:3000' }));
+app.use(cors({ origin: CORS_ORIGIN }));
 
 app.use('/auth', authRoutes);
 

@@ -1,20 +1,9 @@
 import { Server, Socket } from 'socket.io';
-import { addMessageToChat, createChat } from '../db/chat';
-import { findByEmail } from '../db/users';
+import { addMessageToChat } from '../db/chat';
 
 export const socket = (io: Server) => {
   io.on('connection', (socket: Socket) => {
     let currRoom: string;
-    socket.on('create-group', async obj => {
-      const ids = obj.users.map(async (user: string) => {
-        const id = await findByEmail(user);
-
-        if (id) return id.id;
-      });
-
-      createChat(await Promise.all(ids));
-    });
-
     socket.on('join', room => {
       currRoom = room;
       socket.join(room);

@@ -42,3 +42,13 @@ export const addMessageToChat = async (
     console.log(error);
   }
 };
+
+export const getChatByParticipants = async (users: Array<string>) => {
+  try {
+    const res = await pool.query('SELECT * FROM chats WHERE participants = $1', [users]);
+
+    return res.rows;
+  } catch (error) {
+    console.log(error);
+  }
+};

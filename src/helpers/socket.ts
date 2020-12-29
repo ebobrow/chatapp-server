@@ -12,8 +12,6 @@ export const socket = (io: Server) => {
         if (id) return id.id;
       });
 
-      console.log(await Promise.all(ids));
-
       createChat(await Promise.all(ids));
     });
 

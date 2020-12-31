@@ -79,7 +79,6 @@ export const password = async (req: Request, res: Response) => {
 
   try {
     const userCheck = await findById(numId);
-
     if (!userCheck) return res.json({ errors: [{ message: 'User does not exist' }] });
 
     if (!(await compare(oldPassword, userCheck.password))) {
@@ -118,8 +117,12 @@ export const addUserFriend = async (req: Request, res: Response) => {
 
   try {
     const friend = await findByEmail(email);
-
     if (!friend) return res.json({ ok: false, error: 'User not found' });
+
+    const user = await findById(id);
+    if (user?.friends.find(frnd => frnd === friend.id)) {
+      return res.json({ ok: false, error: 'Friend already exists' });
+    }
     const newFriend = await addFriend(id, friend.id);
     res.json({ ok: true, friend: newFriend });
   } catch (error) {

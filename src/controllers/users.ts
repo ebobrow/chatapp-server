@@ -132,6 +132,11 @@ export const addUserFriend = async (req: Request, res: Response) => {
     if (!friend) return res.json({ ok: false, error: 'User not found' });
 
     const user = await findById(id);
+
+    if (!user?.friends) {
+      await addFriend(id, friend.id);
+      return res.json({ ok: true, friend });
+    }
     if (user?.friends.find(frnd => frnd === friend.id)) {
       return res.json({ ok: false, error: 'Friend already exists' });
     }

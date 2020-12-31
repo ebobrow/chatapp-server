@@ -3,7 +3,7 @@ import {
   addFriend,
   addUser,
   changePassword,
-  findByEmail,
+  findByusername,
   findById
 } from '../db/users';
 import {
@@ -16,14 +16,14 @@ import { checkToken, signToken } from '../helpers/users';
 import { compare, hash } from 'bcrypt';
 
 export const loginUser = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  const { username, password } = req.body;
 
-  const errors = validateSchema(loginSchema, { email, password }) || [];
+  const errors = validateSchema(loginSchema, { username, password }) || [];
   // if (errors) return res.json({ error: errors });
 
   // User exists?
   try {
-    const user = await findByEmail(email);
+    const user = await findByusername(username);
     if (!user) {
       // return res.json({ error: ['User not found'] });
       errors.push({ message: 'User not found' });
@@ -42,25 +42,29 @@ export const loginUser = async (req: Request, res: Response) => {
 };
 
 export const registerUser = async (req: Request, res: Response) => {
-  const { name, email, password, passwordVerify } = req.body;
+  const { name, username, password, passwordVerify } = req.body;
 
   const errors =
-    validateSchema(registerSchema, { name, email, password, passwordVerify }) ||
-    [];
+    validateSchema(registerSchema, {
+      name,
+      username,
+      password,
+      passwordVerify
+    }) || [];
   // if (error) return res.json({ error });
 
   try {
-    const userCheck = await findByEmail(email);
+    const userCheck = await findByusername(username);
     if (userCheck) {
-      // return res.json({ error: ['Email already in use'] });
-      errors.push({ message: 'Email already in use' });
+      // return res.json({ error: ['username already in use'] });
+      errors.push({ message: 'username already in use' });
     }
     if (errors.length > 0) {
       return res.json({ errors });
     }
 
     const encryptedPassword = await hash(password, 10);
-    const user = await addUser({ name, email, password: encryptedPassword });
+    const user = await addUser({ name, username, password: encryptedPassword });
     if (!user) throw new Error('Failure adding user');
     return res.json({ errors: null, token: signToken(user) });
   } catch (error) {
@@ -110,7 +114,7 @@ export const getFriendNames = async (req: Request, res: Response) => {
     const friends = await ids.map(async (id: number) => {
       const friend = await findById(id);
 
-      return { name: friend?.name, email: friend?.email };
+      return { name: friend?.name, username: friend?.username };
     });
     const resolvedFriends = await Promise.all(friends);
 
@@ -121,10 +125,10 @@ export const getFriendNames = async (req: Request, res: Response) => {
 };
 
 export const addUserFriend = async (req: Request, res: Response) => {
-  const { email, id } = req.body;
+  const { username, id } = req.body;
 
   try {
-    const friend = await findByEmail(email);
+    const friend = await findByusername(username);
     if (!friend) return res.json({ ok: false, error: 'User not found' });
 
     const user = await findById(id);

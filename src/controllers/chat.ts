@@ -5,7 +5,7 @@ import {
   getChatByParticipants,
   getChatById
 } from '../db/chat';
-import { findByEmail, findById } from '../db/users';
+import { findByusername, findById } from '../db/users';
 
 export const getChats = async (req: Request, res: Response) => {
   const { id } = req.body;
@@ -32,10 +32,10 @@ export const getChats = async (req: Request, res: Response) => {
 };
 
 export const findUser = async (req: Request, res: Response) => {
-  const { email } = req.body;
+  const { username } = req.body;
 
   try {
-    const user = await findByEmail(email);
+    const user = await findByusername(username);
     res.json({ user });
   } catch (error) {
     console.log(error);
@@ -47,7 +47,7 @@ export const createChatEndpoint = async (req: Request, res: Response) => {
 
   try {
     const ids: Array<string> = users.map(async (user: string) => {
-      const id = await findByEmail(user);
+      const id = await findByusername(user);
 
       if (id) return id.id;
     });
@@ -92,7 +92,7 @@ export const getParticipantNames = async (req: Request, res: Response) => {
 
     const participants = chat.participants.map(async (participant: number) => {
       const user = await findById(participant);
-      return { name: user?.name, email: user?.email };
+      return { name: user?.name, username: user?.username };
     });
 
     const resolvedParticipants = await Promise.all(participants);

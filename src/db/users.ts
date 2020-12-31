@@ -14,12 +14,12 @@ export const findById = async (
   }
 };
 
-export const findByEmail = async (
-  email: string
+export const findByusername = async (
+  username: string
 ): Promise<UserEntry | null | undefined> => {
   try {
-    const user = await pool.query('SELECT * FROM users WHERE email = $1', [
-      email
+    const user = await pool.query('SELECT * FROM users WHERE username = $1', [
+      username
     ]);
 
     return user.rows.length === 0 ? null : user.rows[0];
@@ -29,11 +29,11 @@ export const findByEmail = async (
 };
 
 export const addUser = async (user: User): Promise<UserEntry | undefined> => {
-  const { email, name, password } = user;
+  const { username, name, password } = user;
   try {
     const res = await pool.query(
-      'INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *',
-      [name, email, password]
+      'INSERT INTO users (name, username, password) VALUES ($1, $2, $3) RETURNING *',
+      [name, username, password]
     );
 
     return res.rows[0];

@@ -20,10 +20,6 @@ const errorMessages: Array<CustomError> = [
     message: 'Name must be less than 50 characters'
   },
   {
-    joiErr: '"email" must be a valid email',
-    message: 'Invalid email'
-  },
-  {
     joiErr: '"passwordVerify" must be [ref:password]',
     message: 'Passwords do not match'
   },
@@ -35,13 +31,13 @@ const errorMessages: Array<CustomError> = [
 
 export const registerSchema = object({
   name: Joi.string().alphanum().max(50).required(),
-  email: Joi.string().email().required(),
+  username: Joi.string().required(),
   password: Joi.string().required(),
   passwordVerify: Joi.ref('password')
 });
 
 export const loginSchema = object({
-  email: Joi.string().email().required(),
+  username: Joi.string().required(),
   password: Joi.string().required()
 });
 
@@ -60,7 +56,8 @@ export const validateSchema = (schema: ObjectSchema, obj: object) => {
 
   error.details.forEach(err => {
     const message =
-      errorMessages.find(msg => msg.joiErr === err.message)?.message || err.message;
+      errorMessages.find(msg => msg.joiErr === err.message)?.message ||
+      err.message;
     messages.push({ message, target: err.context?.label });
   });
 

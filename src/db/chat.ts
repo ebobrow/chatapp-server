@@ -15,9 +15,10 @@ export const createChat = async (users: Array<string>) => {
 
 export const getChatsByUser = async (id: string) => {
   try {
-    const res = await pool.query('SELECT * FROM chats WHERE participants @> ARRAY[$1]', [
-      id
-    ]);
+    const res = await pool.query(
+      'SELECT * FROM chats WHERE participants @> ARRAY[$1]',
+      [id]
+    );
 
     return res.rows;
   } catch (error) {
@@ -60,7 +61,7 @@ export const getChatById = async (id: string) => {
   try {
     const res = await pool.query('SELECT * FROM chats WHERE id = $1', [id]);
 
-    return res.rows;
+    return res.rows[0];
   } catch (error) {
     console.log(error);
   }

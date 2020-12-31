@@ -77,7 +77,26 @@ export const getChatMessages = async (req: Request, res: Response) => {
     const chat = await getChatById(id);
     if (!chat) return res.json({ messages: [] });
 
-    return res.json({ messages: chat[0].messages });
+    return res.json({ messages: chat.messages });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getParticipantNames = async (req: Request, res: Response) => {
+  const { id } = req.body;
+
+  try {
+    const chat = await getChatById(id);
+    if (!chat) return res.json({ participants: [] });
+
+    const participants = chat.participants.map(async (participant: number) => {
+      const user = await findById(participant);
+      return { name: user?.name, email: user?.email };
+    });
+
+    const resolvedParticipants = await Promise.all(participants);
+    return res.json({ participants: resolvedParticipants });
   } catch (error) {
     console.log(error);
   }

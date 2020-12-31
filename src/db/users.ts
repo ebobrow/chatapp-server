@@ -50,3 +50,16 @@ export const changePassword = async (userId: number, password: string) => {
     console.log(error);
   }
 };
+
+export const addFriend = async (userId: number, friendId: number) => {
+  try {
+    const res = await pool.query(
+      'UPDATE users SET friends = array_append(friends, CAST($1 AS BIGINT)) WHERE id = $2',
+      [friendId, userId]
+    );
+
+    return res.rows;
+  } catch (error) {
+    console.log(error);
+  }
+};

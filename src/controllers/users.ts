@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { addUser, changePassword, findByEmail, findById } from '../db/users';
+import { addFriend, addUser, changePassword, findByEmail, findById } from '../db/users';
 import {
   changePasswordSchema,
   loginSchema,
@@ -91,6 +91,37 @@ export const password = async (req: Request, res: Response) => {
     if (!newUser) throw new Error('Failure changing password');
 
     return res.json({ errors: null, token: signToken(newUser) });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getFriendNames = async (req: Request, res: Response) => {
+  const { ids } = req.body;
+
+  try {
+    const friends = await ids.map(async (id: number) => {
+      const friend = await findById(id);
+
+      return { name: friend?.name, email: friend?.email };
+    });
+    const resolvedFriends = await Promise.all(friends);
+
+    return res.json({ names: resolvedFriends });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const addUserFriend = async (req: Request, res: Response) => {
+  const { email, id } = req.body;
+
+  try {
+    const friend = await findByEmail(email);
+
+    if (!friend) return res.json({ ok: false, error: 'User not found' });
+    const newFriend = await addFriend(id, friend.id);
+    res.json({ ok: true, friend: newFriend });
   } catch (error) {
     console.log(error);
   }

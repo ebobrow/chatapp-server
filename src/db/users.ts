@@ -2,7 +2,9 @@ import { formatDate } from '../helpers/users';
 import { User, UserEntry } from '../types';
 import { pool } from './postgresConfig';
 
-export const findById = async (id: number): Promise<UserEntry | null | undefined> => {
+export const findById = async (
+  id: number
+): Promise<UserEntry | null | undefined> => {
   try {
     const user = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
 
@@ -16,7 +18,9 @@ export const findByEmail = async (
   email: string
 ): Promise<UserEntry | null | undefined> => {
   try {
-    const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const user = await pool.query('SELECT * FROM users WHERE email = $1', [
+      email
+    ]);
 
     return user.rows.length === 0 ? null : user.rows[0];
   } catch (error) {
@@ -54,7 +58,7 @@ export const changePassword = async (userId: number, password: string) => {
 export const addFriend = async (userId: number, friendId: number) => {
   try {
     const res = await pool.query(
-      'UPDATE users SET friends = array_append(friends, CAST($1 AS BIGINT)) WHERE id = $2 RETURNING *',
+      'UPDATE users SET friends = array_append(friends, CAST($1 AS BIGINT)) WHERE id = $2',
       [friendId, userId]
     );
 

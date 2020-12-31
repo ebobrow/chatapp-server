@@ -1,5 +1,11 @@
 import { Request, Response } from 'express';
-import { addFriend, addUser, changePassword, findByEmail, findById } from '../db/users';
+import {
+  addFriend,
+  addUser,
+  changePassword,
+  findByEmail,
+  findById
+} from '../db/users';
 import {
   changePasswordSchema,
   loginSchema,
@@ -39,7 +45,8 @@ export const registerUser = async (req: Request, res: Response) => {
   const { name, email, password, passwordVerify } = req.body;
 
   const errors =
-    validateSchema(registerSchema, { name, email, password, passwordVerify }) || [];
+    validateSchema(registerSchema, { name, email, password, passwordVerify }) ||
+    [];
   // if (error) return res.json({ error });
 
   try {
@@ -79,7 +86,8 @@ export const password = async (req: Request, res: Response) => {
 
   try {
     const userCheck = await findById(numId);
-    if (!userCheck) return res.json({ errors: [{ message: 'User does not exist' }] });
+    if (!userCheck)
+      return res.json({ errors: [{ message: 'User does not exist' }] });
 
     if (!(await compare(oldPassword, userCheck.password))) {
       return res.json({ errors: [{ message: 'Password incorrect' }] });
@@ -124,7 +132,7 @@ export const addUserFriend = async (req: Request, res: Response) => {
       return res.json({ ok: false, error: 'Friend already exists' });
     }
     const newFriend = await addFriend(id, friend.id);
-    res.json({ ok: true, friend: newFriend });
+    res.json({ ok: true, friend });
   } catch (error) {
     console.log(error);
   }

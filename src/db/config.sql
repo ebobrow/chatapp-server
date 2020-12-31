@@ -3,6 +3,7 @@ CREATE TABLE users (
   name VARCHAR(50) NOT NULL,
   email text NOT NULL UNIQUE,
   password text NOT NULL,
+  friends bigint ARRAY,
   created_at date DEFAULT CURRENT_DATE,
   modified_at date DEFAULT CURRENT_DATE
 );

@@ -1,5 +1,10 @@
 import { Request, Response } from 'express';
-import { getChatsByUser, createChat, getChatByParticipants } from '../db/chat';
+import {
+  getChatsByUser,
+  createChat,
+  getChatByParticipants,
+  getChatById
+} from '../db/chat';
 import { findByEmail, findById } from '../db/users';
 
 export const getChats = async (req: Request, res: Response) => {
@@ -50,11 +55,29 @@ export const createChatEndpoint = async (req: Request, res: Response) => {
     const resolvedIds = await Promise.all(ids);
     const existing = await getChatByParticipants(resolvedIds);
     if (!existing) throw new Error();
+
     if (existing.length) {
-      return res.json({ ok: false, error: 'Chat already exists' });
+      return res.json({
+        error: 'Chat already exists',
+        id: existing[0].id
+      });
     }
-    createChat(resolvedIds);
-    return res.json({ ok: true, error: null });
+    const chat = await createChat(resolvedIds);
+    if (!chat) throw new Error();
+    return res.json({ ok: true, error: null, id: chat[0].id });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getChatMessages = async (req: Request, res: Response) => {
+  const { id } = req.body;
+
+  try {
+    const chat = await getChatById(id);
+    if (!chat) return res.json({ messages: [] });
+
+    return res.json({ messages: chat[0].messages });
   } catch (error) {
     console.log(error);
   }

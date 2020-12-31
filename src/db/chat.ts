@@ -45,7 +45,20 @@ export const addMessageToChat = async (
 
 export const getChatByParticipants = async (users: Array<string>) => {
   try {
-    const res = await pool.query('SELECT * FROM chats WHERE participants = $1', [users]);
+    const res = await pool.query(
+      'SELECT * FROM chats WHERE participants @> $1 AND $1 @> participants',
+      [users]
+    );
+
+    return res.rows;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getChatById = async (id: string) => {
+  try {
+    const res = await pool.query('SELECT * FROM chats WHERE id = $1', [id]);
 
     return res.rows;
   } catch (error) {

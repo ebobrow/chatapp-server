@@ -1,12 +1,16 @@
-import { Router, json } from 'express';
-import { createChatEndpoint, findUser, getChats } from '../controllers/chat';
+import { Router } from 'express';
+import {
+  createChatEndpoint,
+  findUser,
+  getChats,
+  getChatMessages
+} from '../controllers/chat';
 
 const router = Router();
-
-router.use(json());
 
 router.post('/chats', getChats);
 router.post('/finduser', findUser);
 router.post('/createchat', createChatEndpoint);
+router.post('/getmessages', getChatMessages);
 
 export default router;

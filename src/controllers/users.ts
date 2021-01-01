@@ -139,8 +139,6 @@ export const requestFriend = async (req: Request, res: Response) => {
     const existing = await getRequests(reciever, 'reciever');
 
     if (existing && existing.find(request => request.sender === sender)) {
-      console.log('repeat');
-
       return res.json({ ok: false, error: 'Friend already requested' });
     }
 

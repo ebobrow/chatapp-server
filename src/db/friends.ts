@@ -22,7 +22,6 @@ export const getRequests = async (
       `SELECT * FROM friend_requests WHERE ${by} = $1`,
       [username]
     );
-    console.log(res);
 
     return res.rows;
   } catch (error) {

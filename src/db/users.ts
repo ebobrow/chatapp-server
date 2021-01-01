@@ -14,7 +14,7 @@ export const findById = async (
   }
 };
 
-export const findByusername = async (
+export const findByUsername = async (
   username: string
 ): Promise<UserEntry | null | undefined> => {
   try {

@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import {
-  addFriend,
   addUser,
   changePassword,
-  findByusername,
-  findById
+  findByUsername,
+  findById,
+  addFriend
 } from '../db/users';
 import {
   changePasswordSchema,
@@ -14,6 +14,7 @@ import {
 } from '../helpers/schemaValidation';
 import { checkToken, signToken } from '../helpers/users';
 import { compare, hash } from 'bcrypt';
+import { createRequest, deleteRequest, getRequests } from '../db/friends';
 
 export const loginUser = async (req: Request, res: Response) => {
   const { username, password } = req.body;
@@ -23,7 +24,7 @@ export const loginUser = async (req: Request, res: Response) => {
 
   // User exists?
   try {
-    const user = await findByusername(username);
+    const user = await findByUsername(username);
     if (!user) {
       // return res.json({ error: ['User not found'] });
       errors.push({ message: 'User not found' });
@@ -54,7 +55,7 @@ export const registerUser = async (req: Request, res: Response) => {
   // if (error) return res.json({ error });
 
   try {
-    const userCheck = await findByusername(username);
+    const userCheck = await findByUsername(username);
     if (userCheck) {
       // return res.json({ error: ['username already in use'] });
       errors.push({ message: 'username already in use' });
@@ -124,24 +125,77 @@ export const getFriendNames = async (req: Request, res: Response) => {
   }
 };
 
-export const addUserFriend = async (req: Request, res: Response) => {
-  const { username, id } = req.body;
+export const requestFriend = async (req: Request, res: Response) => {
+  const { sender, reciever } = req.body;
 
   try {
-    const friend = await findByusername(username);
+    const friend = await findByUsername(reciever);
     if (!friend) return res.json({ ok: false, error: 'User not found' });
 
-    const user = await findById(id);
+    if (friend.friends.find(f => f === sender)) {
+      return res.json({ ok: false, error: 'You are already friends' });
+    }
 
-    if (!user?.friends) {
-      await addFriend(id, friend.id);
-      return res.json({ ok: true, friend });
+    const existing = await getRequests(reciever, 'reciever');
+
+    if (existing && existing.find(request => request.sender === sender)) {
+      console.log('repeat');
+
+      return res.json({ ok: false, error: 'Friend already requested' });
     }
-    if (user?.friends.find(frnd => frnd === friend.id)) {
-      return res.json({ ok: false, error: 'Friend already exists' });
+
+    await createRequest(sender, reciever);
+    res.json({ ok: true });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const recievedRequests = async (req: Request, res: Response) => {
+  const { username } = req.body;
+
+  try {
+    const requests = await getRequests(username, 'reciever');
+
+    res.json({ requests });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const handleRequest = async (req: Request, res: Response) => {
+  const { sender, reciever, accept } = req.body;
+
+  try {
+    await deleteRequest(sender, reciever);
+
+    if (!accept) {
+      return res.json({ ok: true });
     }
-    const newFriend = await addFriend(id, friend.id);
-    res.json({ ok: true, friend });
+
+    const senderId = (await findByUsername(sender))?.id;
+    const recieverUser = await findByUsername(reciever);
+    const recieverId = recieverUser?.id;
+
+    if (!senderId || !recieverId) {
+      return res.json({ ok: false, error: 'User not found' });
+    }
+    await addFriend(senderId, recieverId);
+    await addFriend(recieverId, senderId);
+
+    return res.json({ ok: true, name: recieverUser?.name });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const sentRequests = async (req: Request, res: Response) => {
+  const { username } = req.body;
+
+  try {
+    const requests = await getRequests(username, 'sender');
+
+    res.json({ requests });
   } catch (error) {
     console.log(error);
   }

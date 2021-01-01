@@ -5,7 +5,7 @@ import {
   getChatByParticipants,
   getChatById
 } from '../db/chat';
-import { findByusername, findById } from '../db/users';
+import { findByUsername, findById } from '../db/users';
 
 export const getChats = async (req: Request, res: Response) => {
   const { id } = req.body;
@@ -35,7 +35,7 @@ export const findUser = async (req: Request, res: Response) => {
   const { username } = req.body;
 
   try {
-    const user = await findByusername(username);
+    const user = await findByUsername(username);
     res.json({ user });
   } catch (error) {
     console.log(error);
@@ -47,7 +47,7 @@ export const createChatEndpoint = async (req: Request, res: Response) => {
 
   try {
     const ids: Array<string> = users.map(async (user: string) => {
-      const id = await findByusername(user);
+      const id = await findByUsername(user);
 
       if (id) return id.id;
     });

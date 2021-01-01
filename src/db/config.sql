@@ -13,3 +13,9 @@ CREATE TABLE chats (
   participants text ARRAY NOT NULL,
   messages jsonb NOT NULL
 );
+
+CREATE TABLE friend_requests (
+  id BIGSERIAL NOT NULL PRIMARY KEY,
+  sender text NOT NULL,
+  reciever text NOT NULL
+);

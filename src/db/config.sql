@@ -17,5 +17,6 @@ CREATE TABLE chats (
 CREATE TABLE friend_requests (
   id BIGSERIAL NOT NULL PRIMARY KEY,
   sender text NOT NULL,
-  reciever text NOT NULL
+  reciever text NOT NULL,
+  seen boolean DEFAULT FALSE
 );

@@ -41,3 +41,16 @@ export const deleteRequest = async (sender: string, reciever: string) => {
     console.log(error);
   }
 };
+
+export const setRequestsAsSeen = async (reciever: string) => {
+  try {
+    const res = await pool.query(
+      'UPDATE friend_requests SET seen = TRUE WHERE reciever = $1',
+      [reciever]
+    );
+
+    return res.rows;
+  } catch (error) {
+    console.log(error);
+  }
+};

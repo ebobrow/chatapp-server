@@ -14,7 +14,12 @@ import {
 } from '../helpers/schemaValidation';
 import { checkToken, signToken } from '../helpers/users';
 import { compare, hash } from 'bcrypt';
-import { createRequest, deleteRequest, getRequests } from '../db/friends';
+import {
+  createRequest,
+  deleteRequest,
+  getRequests,
+  setRequestsAsSeen
+} from '../db/friends';
 
 export const loginUser = async (req: Request, res: Response) => {
   const { username, password } = req.body;
@@ -194,6 +199,18 @@ export const sentRequests = async (req: Request, res: Response) => {
     const requests = await getRequests(username, 'sender');
 
     res.json({ requests });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const markAsSeen = async (req: Request, res: Response) => {
+  const { username } = req.body;
+
+  try {
+    const set = await setRequestsAsSeen(username);
+
+    return res.json({ ok: true, set });
   } catch (error) {
     console.log(error);
   }

@@ -8,7 +8,8 @@ import {
   recievedRequests,
   handleRequest,
   requestFriend,
-  sentRequests
+  sentRequests,
+  markAsSeen
 } from '../controllers/users';
 
 const router = Router();
@@ -22,5 +23,6 @@ router.post('/friends/request', requestFriend);
 router.post('/friends/recievedrequests', recievedRequests);
 router.post('/friends/sentrequests', sentRequests);
 router.post('/friends/accept', handleRequest);
+router.post('/friends/seen', markAsSeen);
 
 export default router;

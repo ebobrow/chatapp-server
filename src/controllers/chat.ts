@@ -65,6 +65,9 @@ export const createChatEndpoint = async (req: Request, res: Response) => {
       });
     }
     const chat = await createChat(resolvedIds);
+    users.map((user: string) => {
+      setLastOpened(user, chat?.id);
+    });
     if (!chat) throw new Error();
     return res.json({ ok: true, error: null, id: chat[0].id });
   } catch (error) {

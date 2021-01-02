@@ -7,7 +7,8 @@ export const createChat = async (users: Array<string>) => {
       "INSERT INTO chats (id, participants, messages, last_opened) VALUES ($1, $2, '[]', '{}') RETURNING *",
       [uuid(), users]
     );
-    return res.rows;
+
+    return res.rows[0];
   } catch (error) {
     console.log(error);
   }

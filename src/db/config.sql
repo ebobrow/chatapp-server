@@ -11,7 +11,8 @@ CREATE TABLE users (
 CREATE TABLE chats (
   id text NOT NULL,
   participants text ARRAY NOT NULL,
-  messages jsonb NOT NULL
+  messages jsonb NOT NULL,
+  last_opened jsonb NOT NULL
 );
 
 CREATE TABLE friend_requests (

@@ -1,9 +1,11 @@
-import { Request, Response } from 'express';
+import { request, Request, Response } from 'express';
 import {
   getChatsByUser,
   createChat,
   getChatByParticipants,
-  getChatById
+  getChatById,
+  getUnopened,
+  setLastOpened
 } from '../db/chat';
 import { findByUsername, findById } from '../db/users';
 
@@ -97,6 +99,47 @@ export const getParticipantNames = async (req: Request, res: Response) => {
 
     const resolvedParticipants = await Promise.all(participants);
     return res.json({ participants: resolvedParticipants });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getUnreadChats = async (req: Request, res: Response) => {
+  const { username, id } = req.body;
+
+  try {
+    const chats = await getChatsByUser(id);
+
+    if (!chats) return res.json({ unread: null });
+
+    const unread = chats.map(async chat => {
+      const unopened = await getUnopened(username, chat.id);
+      if (!unopened || unopened.length === 0) return;
+      const obj = {
+        id: chat.id,
+        amount: unopened.length
+      };
+      return obj;
+    });
+
+    const resolvedUnread = (await Promise.all(unread)).filter(
+      chat => chat !== undefined
+    );
+    console.log(resolvedUnread);
+
+    if (!resolvedUnread.length) return res.json({ unread: null });
+
+    return res.json({ unread: resolvedUnread });
+  } catch (error) {}
+};
+
+export const openChat = async (req: Request, res: Response) => {
+  const { username, chatId } = req.body;
+
+  try {
+    await setLastOpened(username, chatId);
+
+    res.json({ ok: true });
   } catch (error) {
     console.log(error);
   }

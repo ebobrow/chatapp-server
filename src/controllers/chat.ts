@@ -7,6 +7,7 @@ import {
   getUnopened,
   setLastOpened
 } from '../db/chat';
+import { getRequests } from '../db/friends';
 import { findByUsername, findById } from '../db/users';
 
 export const getChats = async (req: Request, res: Response) => {
@@ -107,13 +108,34 @@ export const getParticipantNames = async (req: Request, res: Response) => {
   }
 };
 
-export const getUnreadChats = async (req: Request, res: Response) => {
+export const openChat = async (req: Request, res: Response) => {
+  const { username, chatId } = req.body;
+
+  try {
+    await setLastOpened(username, chatId);
+
+    res.json({ ok: true });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getNotifications = async (req: Request, res: Response) => {
   const { username, id } = req.body;
 
   try {
     const chats = await getChatsByUser(id);
+    const requests = await getRequests(username, 'reciever');
 
-    if (!chats) return res.json({ unread: null });
+    if (!chats) {
+      return res.json({
+        notifications: [
+          { name: 'Chat', new: false, chats: [] },
+          { name: 'Friends', new: !!requests?.length }
+        ],
+        requests
+      });
+    }
 
     const unread = chats.map(async chat => {
       const unopened = await getUnopened(username, chat.id);
@@ -128,21 +150,13 @@ export const getUnreadChats = async (req: Request, res: Response) => {
     const resolvedUnread = (await Promise.all(unread)).filter(
       chat => chat !== undefined
     );
-    console.log(resolvedUnread);
-
-    if (!resolvedUnread.length) return res.json({ unread: null });
-
-    return res.json({ unread: resolvedUnread });
-  } catch (error) {}
-};
-
-export const openChat = async (req: Request, res: Response) => {
-  const { username, chatId } = req.body;
-
-  try {
-    await setLastOpened(username, chatId);
-
-    res.json({ ok: true });
+    return res.json({
+      notifications: {
+        Chat: { new: !!resolvedUnread.length, chats: resolvedUnread },
+        Friends: { new: !!requests?.length }
+      },
+      requests
+    });
   } catch (error) {
     console.log(error);
   }

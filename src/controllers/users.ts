@@ -6,12 +6,6 @@ import {
   findById,
   addFriend
 } from '../db/users';
-import {
-  changePasswordSchema,
-  loginSchema,
-  registerSchema,
-  validateSchema
-} from '../helpers/schemaValidation';
 import { checkToken, signToken } from '../helpers/users';
 import { compare, hash } from 'bcrypt';
 import {
@@ -24,18 +18,11 @@ import {
 export const loginUser = async (req: Request, res: Response) => {
   const { username, password } = req.body;
 
-  const errors = validateSchema(loginSchema, { username, password }) || [];
-  // if (errors) return res.json({ error: errors });
-
   // User exists?
   try {
     const user = await findByUsername(username);
     if (!user) {
-      // return res.json({ error: ['User not found'] });
-      errors.push({ message: 'User not found' });
-    }
-    if (errors.length > 0) {
-      return res.json({ errors });
+      return res.json({ errors: ['User not found'] });
     }
 
     if (!(await compare(password, (user as any).password))) {
@@ -50,23 +37,10 @@ export const loginUser = async (req: Request, res: Response) => {
 export const registerUser = async (req: Request, res: Response) => {
   const { name, username, password, passwordVerify } = req.body;
 
-  const errors =
-    validateSchema(registerSchema, {
-      name,
-      username,
-      password,
-      passwordVerify
-    }) || [];
-  // if (error) return res.json({ error });
-
   try {
     const userCheck = await findByUsername(username);
     if (userCheck) {
-      // return res.json({ error: ['username already in use'] });
-      errors.push({ message: 'username already in use' });
-    }
-    if (errors.length > 0) {
-      return res.json({ errors });
+      return res.json({ errors: ['Username already in use'] });
     }
 
     const encryptedPassword = await hash(password, 10);
@@ -86,21 +60,12 @@ export const password = async (req: Request, res: Response) => {
   const { id, oldPassword, newPassword, newPasswordVerify } = req.body;
   const numId = parseInt(id);
 
-  const errors = validateSchema(changePasswordSchema, {
-    oldPassword,
-    newPassword,
-    newPasswordVerify
-  });
-
-  if (errors) return res.json({ errors });
-
   try {
     const userCheck = await findById(numId);
-    if (!userCheck)
-      return res.json({ errors: [{ message: 'User does not exist' }] });
+    if (!userCheck) return res.json({ errors: ['User does not exist'] });
 
     if (!(await compare(oldPassword, userCheck.password))) {
-      return res.json({ errors: [{ message: 'Password incorrect' }] });
+      return res.json({ errors: ['Password incorrect'] });
     }
 
     const newUser = await changePassword(numId, await hash(newPassword, 10));

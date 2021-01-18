@@ -90,14 +90,14 @@ export const getFriendNames = async (req: Request, res: Response) => {
       throw new Error('Invalid token');
     }
     const ids = user.friends;
-    const friends = await ids.map(async (id: number) => {
+    const friends = ids.map(async (id: number) => {
       const friend = await findById(id);
 
       return { name: friend?.name, username: friend?.username };
     });
     const resolvedFriends = await Promise.all(friends);
 
-    return res.json({ names: resolvedFriends });
+    return res.json({ friends: resolvedFriends });
   } catch (error) {
     console.log(error);
   }

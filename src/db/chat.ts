@@ -1,7 +1,7 @@
 import { pool } from './postgresConfig';
 import { v4 as uuid } from 'uuid';
 
-export const createChat = async (users: Array<string>) => {
+export const createChat = async (users: Array<number>) => {
   try {
     const res = await pool.query(
       "INSERT INTO chats (id, participants, messages, last_opened) VALUES ($1, $2, '[]', '{}') RETURNING *",
@@ -14,7 +14,7 @@ export const createChat = async (users: Array<string>) => {
   }
 };
 
-export const getChatsByUser = async (id: string) => {
+export const getChatsByUser = async (id: number) => {
   try {
     const res = await pool.query(
       'SELECT * FROM chats WHERE participants @> ARRAY[$1]',
@@ -45,7 +45,7 @@ export const addMessageToChat = async (
   }
 };
 
-export const getChatByParticipants = async (users: Array<string>) => {
+export const getChatByParticipants = async (users: Array<number>) => {
   try {
     const res = await pool.query(
       'SELECT * FROM chats WHERE participants @> $1 AND $1 @> participants',
@@ -58,7 +58,7 @@ export const getChatByParticipants = async (users: Array<string>) => {
   }
 };
 
-export const getChatById = async (id: string) => {
+export const getChatById = async (id: number) => {
   try {
     const res = await pool.query('SELECT * FROM chats WHERE id = $1', [id]);
 

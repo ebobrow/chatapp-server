@@ -9,12 +9,15 @@ import {
 } from '../db/chat';
 import { getRequests } from '../db/friends';
 import { findByUsername, findById } from '../db/users';
+import { extractUserFromCookie } from '../helpers/users';
 
 export const getChats = async (req: Request, res: Response) => {
-  const { id } = req.body;
-
   try {
-    const data = await getChatsByUser(id);
+    const user = await extractUserFromCookie(req);
+    if (!user) {
+      throw new Error('Invalid token');
+    }
+    const data = await getChatsByUser(user.id);
 
     if (!data) return res.json({ chats: null });
 
@@ -35,10 +38,11 @@ export const getChats = async (req: Request, res: Response) => {
 };
 
 export const findUser = async (req: Request, res: Response) => {
-  const { username } = req.body;
-
   try {
-    const user = await findByUsername(username);
+    const user = await extractUserFromCookie(req);
+    if (!user) {
+      throw new Error('Invalid token');
+    }
     res.json({ user });
   } catch (error) {
     console.log(error);
@@ -49,13 +53,17 @@ export const createChatEndpoint = async (req: Request, res: Response) => {
   const { users } = req.body;
 
   try {
-    const ids: Array<string> = users.map(async (user: string) => {
+    const user = await extractUserFromCookie(req);
+    if (!user) {
+      throw new Error('Invalid token');
+    }
+    const ids: Array<number> = users.map(async (user: string) => {
       const id = await findByUsername(user);
 
       if (id) return id.id;
     });
 
-    const resolvedIds = await Promise.all(ids);
+    const resolvedIds = [...(await Promise.all(ids)), user.id];
     const existing = await getChatByParticipants(resolvedIds);
     if (!existing) throw new Error();
 
@@ -109,10 +117,14 @@ export const getParticipantNames = async (req: Request, res: Response) => {
 };
 
 export const openChat = async (req: Request, res: Response) => {
-  const { username, chatId } = req.body;
+  const { chatId } = req.body;
 
   try {
-    await setLastOpened(username, chatId);
+    const user = await extractUserFromCookie(req);
+    if (!user) {
+      throw new Error('Invalid token');
+    }
+    await setLastOpened(user.username, chatId);
 
     res.json({ ok: true });
   } catch (error) {
@@ -121,11 +133,13 @@ export const openChat = async (req: Request, res: Response) => {
 };
 
 export const getNotifications = async (req: Request, res: Response) => {
-  const { username, id } = req.body;
-
   try {
-    const chats = await getChatsByUser(id);
-    const requests = await getRequests(username, 'reciever');
+    const user = await extractUserFromCookie(req);
+    if (!user) {
+      throw new Error('Invalid token');
+    }
+    const chats = await getChatsByUser(user.id);
+    const requests = await getRequests(user.username, 'reciever');
 
     if (!chats) {
       return res.json({
@@ -138,7 +152,7 @@ export const getNotifications = async (req: Request, res: Response) => {
     }
 
     const unread = chats.map(async chat => {
-      const unopened = await getUnopened(username, chat.id);
+      const unopened = await getUnopened(user.username, chat.id);
       if (!unopened || unopened.length === 0) return;
       const obj = {
         id: chat.id,

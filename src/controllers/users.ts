@@ -6,7 +6,7 @@ import {
   findById,
   addFriend
 } from '../db/users';
-import { checkToken, signToken } from '../helpers/users';
+import { checkToken, extractUserFromCookie, signToken } from '../helpers/users';
 import { compare, hash } from 'bcrypt';
 import {
   createRequest,
@@ -28,6 +28,7 @@ export const loginUser = async (req: Request, res: Response) => {
     if (!(await compare(password, (user as any).password))) {
       return res.json({ errors: [{ message: 'Password incorrect' }] });
     }
+    res.cookie('jid', signToken(user), { httpOnly: true });
     return res.json({ errors: null, token: signToken(user!) });
   } catch (error) {
     console.log(error);
@@ -46,6 +47,7 @@ export const registerUser = async (req: Request, res: Response) => {
     const encryptedPassword = await hash(password, 10);
     const user = await addUser({ name, username, password: encryptedPassword });
     if (!user) throw new Error('Failure adding user');
+    res.cookie('jid', signToken(user), { httpOnly: true });
     return res.json({ errors: null, token: signToken(user) });
   } catch (error) {
     console.log(error);
@@ -57,31 +59,37 @@ export const token = (req: Request, res: Response) => {
 };
 
 export const password = async (req: Request, res: Response) => {
-  const { id, oldPassword, newPassword, newPasswordVerify } = req.body;
-  const numId = parseInt(id);
+  const { oldPassword, newPassword, newPasswordVerify } = req.body;
 
   try {
-    const userCheck = await findById(numId);
+    const user = await extractUserFromCookie(req);
+    if (!user) {
+      throw new Error('Invalid token');
+    }
+    const userCheck = await findById(user.id);
     if (!userCheck) return res.json({ errors: ['User does not exist'] });
 
     if (!(await compare(oldPassword, userCheck.password))) {
       return res.json({ errors: ['Password incorrect'] });
     }
 
-    const newUser = await changePassword(numId, await hash(newPassword, 10));
+    const newUser = await changePassword(user.id, await hash(newPassword, 10));
 
     if (!newUser) throw new Error('Failure changing password');
 
-    return res.json({ errors: null, token: signToken(newUser) });
+    return res.json({ errors: null });
   } catch (error) {
     console.log(error);
   }
 };
 
 export const getFriendNames = async (req: Request, res: Response) => {
-  const { ids } = req.body;
-
   try {
+    const user = await extractUserFromCookie(req);
+    if (!user) {
+      throw new Error('Invalid token');
+    }
+    const ids = user.friends;
     const friends = await ids.map(async (id: number) => {
       const friend = await findById(id);
 
@@ -96,23 +104,30 @@ export const getFriendNames = async (req: Request, res: Response) => {
 };
 
 export const requestFriend = async (req: Request, res: Response) => {
-  const { sender, reciever } = req.body;
+  const { reciever } = req.body;
 
   try {
+    const user = await extractUserFromCookie(req);
+    if (!user) {
+      throw new Error('Invalid token');
+    }
     const friend = await findByUsername(reciever);
     if (!friend) return res.json({ ok: false, error: 'User not found' });
 
-    if (friend.friends.find(f => f === sender)) {
+    if (friend.friends.find(f => f === user.id)) {
       return res.json({ ok: false, error: 'You are already friends' });
     }
 
     const existing = await getRequests(reciever, 'reciever');
 
-    if (existing && existing.find(request => request.sender === sender)) {
+    if (
+      existing &&
+      existing.find(request => request.sender === user.username)
+    ) {
       return res.json({ ok: false, error: 'Friend already requested' });
     }
 
-    await createRequest(sender, reciever);
+    await createRequest(user.username, reciever);
     res.json({ ok: true });
   } catch (error) {
     console.log(error);
@@ -120,10 +135,12 @@ export const requestFriend = async (req: Request, res: Response) => {
 };
 
 export const recievedRequests = async (req: Request, res: Response) => {
-  const { username } = req.body;
-
   try {
-    const requests = await getRequests(username, 'reciever');
+    const user = await extractUserFromCookie(req);
+    if (!user) {
+      throw new Error('Invalid token');
+    }
+    const requests = await getRequests(user.username, 'reciever');
 
     res.json({ requests });
   } catch (error) {
@@ -132,16 +149,20 @@ export const recievedRequests = async (req: Request, res: Response) => {
 };
 
 export const handleRequest = async (req: Request, res: Response) => {
-  const { sender, reciever, accept } = req.body;
+  const { reciever, accept } = req.body;
 
   try {
-    await deleteRequest(sender, reciever);
+    const user = await extractUserFromCookie(req);
+    if (!user || !user.username) {
+      throw new Error('Invalid token');
+    }
+    await deleteRequest(user.username, reciever);
 
     if (!accept) {
       return res.json({ ok: true });
     }
 
-    const senderId = (await findByUsername(sender))?.id;
+    const senderId = user.id;
     const recieverUser = await findByUsername(reciever);
     const recieverId = recieverUser?.id;
 
@@ -158,10 +179,13 @@ export const handleRequest = async (req: Request, res: Response) => {
 };
 
 export const sentRequests = async (req: Request, res: Response) => {
-  const { username } = req.body;
-
   try {
-    const requests = await getRequests(username, 'sender');
+    const user = await extractUserFromCookie(req);
+    if (!user || !user.username) {
+      throw new Error('Invalid token');
+    }
+
+    const requests = await getRequests(user.username, 'sender');
 
     res.json({ requests });
   } catch (error) {
@@ -170,13 +194,20 @@ export const sentRequests = async (req: Request, res: Response) => {
 };
 
 export const markAsSeen = async (req: Request, res: Response) => {
-  const { username } = req.body;
-
   try {
-    const set = await setRequestsAsSeen(username);
+    const user = await extractUserFromCookie(req);
+    if (!user || !user.username) {
+      throw new Error('Invalid token');
+    }
+    const set = await setRequestsAsSeen(user.username);
 
     return res.json({ ok: true, set });
   } catch (error) {
     console.log(error);
   }
+};
+
+export const logOut = (_: Request, res: Response) => {
+  res.clearCookie('jid', { httpOnly: true });
+  return res.json({ ok: true });
 };

@@ -9,20 +9,22 @@ import {
   handleRequest,
   requestFriend,
   sentRequests,
-  markAsSeen
+  markAsSeen,
+  logOut
 } from '../controllers/users';
 
 const router = Router();
 
+router.post('/logout', logOut);
 router.post('/login', loginUser);
 router.post('/register', registerUser);
-router.post('/token', token);
+router.get('/token', token);
 router.post('/password', password);
-router.post('/friends/getnames', getFriendNames);
+router.get('/friends/getnames', getFriendNames);
 router.post('/friends/request', requestFriend);
-router.post('/friends/recievedrequests', recievedRequests);
-router.post('/friends/sentrequests', sentRequests);
+router.get('/friends/recievedrequests', recievedRequests);
+router.get('/friends/sentrequests', sentRequests);
 router.post('/friends/accept', handleRequest);
-router.post('/friends/seen', markAsSeen);
+router.get('/friends/seen', markAsSeen);
 
 export default router;

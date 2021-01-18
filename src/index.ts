@@ -7,6 +7,7 @@ import { Server } from 'socket.io';
 import http from 'http';
 import { CORS_ORIGIN } from './constants';
 import { socket } from './helpers/socket';
+import cookieparser from 'cookie-parser';
 
 const app = express();
 const server = http.createServer(app);
@@ -21,8 +22,9 @@ socket(io);
 const PORT = process.env.PORT || 4000;
 
 app.use(morgan('dev'));
-app.use(cors({ origin: CORS_ORIGIN }));
+app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
 app.use(json());
+app.use(cookieparser());
 
 app.use('/auth', authRoutes);
 app.use('/chat', chatRoutes);

@@ -11,12 +11,12 @@ import {
 
 const router = Router();
 
-router.post('/chats', getChats);
+router.get('/chats', getChats);
 router.post('/finduser', findUser);
 router.post('/createchat', createChatEndpoint);
 router.post('/getmessages', getChatMessages);
 router.post('/getparticipants', getParticipantNames);
 router.post('/setopen', openChat);
-router.post('/notifications', getNotifications);
+router.get('/notifications', getNotifications);
 
 export default router;

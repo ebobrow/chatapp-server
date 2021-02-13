@@ -37,18 +37,6 @@ export const getChats = async (req: Request, res: Response) => {
   }
 };
 
-export const findUser = async (req: Request, res: Response) => {
-  try {
-    const user = await extractUserFromCookie(req);
-    if (!user) {
-      throw new Error('Invalid token');
-    }
-    res.json({ user });
-  } catch (error) {
-    console.log(error);
-  }
-};
-
 export const createChatEndpoint = async (req: Request, res: Response) => {
   const { users } = req.body;
 

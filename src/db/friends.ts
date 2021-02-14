@@ -1,56 +1,77 @@
 import { pool } from './postgresConfig';
 
-export const createRequest = async (sender: string, reciever: string) => {
-  try {
-    const res = await pool.query(
-      'INSERT INTO friend_requests (sender, reciever) VALUES ($1, $2) RETURNING *',
-      [sender, reciever]
-    );
+export const createRequest = async (sender: number, reciever: number) => {
+  const res = await pool.query(
+    'INSERT INTO friends (sender, reciever) VALUES ($1, $2) RETURNING *',
+    [sender, reciever]
+  );
 
-    return res.rows[0];
-  } catch (error) {
-    console.log(error);
-  }
+  return res.rows[0];
 };
 
 export const getRequests = async (
-  username: string,
-  by: 'sender' | 'reciever'
+  id: number,
+  by: 'sender' | 'reciever',
+  unseen: boolean = false
 ) => {
-  try {
-    const res = await pool.query(
-      `SELECT * FROM friend_requests WHERE ${by} = $1`,
-      [username]
-    );
+  const opposite = by === 'reciever' ? 'sender' : 'reciever';
 
-    return res.rows;
-  } catch (error) {
-    console.log(error);
-  }
+  const res = await pool.query(
+    `SELECT u.username
+    FROM friends
+    LEFT JOIN users u ON u.id = ${opposite}
+    WHERE ${by} = $1 AND accepted = FALSE
+    ${unseen ? 'AND seen = FALSE' : ''}`,
+    [id]
+  );
+
+  return res.rows.map(row => row.username);
 };
 
-export const deleteRequest = async (sender: string, reciever: string) => {
-  try {
-    const res = await pool.query(
-      'DELETE FROM friend_requests WHERE sender = $1 AND reciever = $2',
-      [sender, reciever]
-    );
+export const getUserFriendNames = async (id: number) => {
+  // Is there a way to do this with only one query?
+  const userSent = await pool.query(
+    `SELECT f.username, f.name FROM users u
+      INNER JOIN friends r ON r.sender = u.id
+      LEFT JOIN users f ON f.id = r.reciever
+      WHERE u.id = $1 AND r.accepted = TRUE`,
+    [id]
+  );
 
-    return res.rows[0];
-  } catch (error) {
-    console.log(error);
-  }
+  const userRecieved = await pool.query(
+    `SELECT f.username, f.name FROM users u
+      INNER JOIN friends r ON r.reciever = u.id
+      LEFT JOIN users f ON f.id = r.sender
+      WHERE u.id = $1 AND r.accepted = TRUE`,
+    [id]
+  );
+
+  return [...userRecieved.rows, ...userSent.rows];
 };
 
-export const setRequestsAsSeen = async (reciever: string) => {
-  try {
-    const res = await pool.query(
-      'UPDATE friend_requests SET seen = TRUE WHERE reciever = $1',
-      [reciever]
-    );
+export const deleteRequest = async (sender: number, reciever: number) => {
+  const res = await pool.query(
+    'DELETE FROM friends WHERE sender = $1 AND reciever = $2',
+    [sender, reciever]
+  );
 
-    return res.rows;
-  } catch (error) {
-    console.log(error);
-  }
+  return res.rows[0];
+};
+
+export const acceptRequest = async (sender: number, reciever: number) => {
+  await pool.query(
+    'UPDATE friends SET accepted = TRUE WHERE sender = $1 AND reciever = $2',
+    [sender, reciever]
+  );
+
+  return true;
+};
+
+export const setRequestsAsSeen = async (recieverId: number) => {
+  const res = await pool.query(
+    'UPDATE friends SET seen = TRUE WHERE reciever = $1',
+    [recieverId]
+  );
+
+  return res.rows;
 };

@@ -1,37 +1,28 @@
-import { request, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import {
   getChatsByUser,
   createChat,
   getChatByParticipants,
   getChatById,
   getUnopened,
-  setLastOpened
+  setLastOpened,
+  getParticipantNamesByChatId
 } from '../db/chat';
 import { getRequests } from '../db/friends';
-import { findByUsername, findById } from '../db/users';
-import { extractUserFromCookie } from '../helpers/users';
+import { findByUsername } from '../db/users';
+import { extractUserIdFromCookie } from '../helpers/users';
 
 export const getChats = async (req: Request, res: Response) => {
   try {
-    const user = await extractUserFromCookie(req);
-    if (!user) {
+    const id = extractUserIdFromCookie(req);
+    if (!id) {
       throw new Error('Invalid token');
     }
-    const data = await getChatsByUser(user.id);
+    const chats = await getChatsByUser(id);
 
-    if (!data) return res.json({ chats: null });
+    if (!chats) return res.json({ chats: null });
 
-    const chats = data.map(async row => {
-      const chat = row.participants.map(async (id: string) => {
-        const user = await findById(parseInt(id));
-        return user?.name;
-      });
-      return { ...row, participants: await Promise.all(chat) };
-    });
-
-    const resolved = await Promise.all(chats);
-
-    res.json({ chats: resolved });
+    res.json({ chats });
   } catch (error) {
     console.log(error);
   }
@@ -41,8 +32,8 @@ export const createChatEndpoint = async (req: Request, res: Response) => {
   const { users } = req.body;
 
   try {
-    const user = await extractUserFromCookie(req);
-    if (!user) {
+    const userId = extractUserIdFromCookie(req);
+    if (!userId) {
       throw new Error('Invalid token');
     }
     const ids: Array<number> = users.map(async (user: string) => {
@@ -51,22 +42,19 @@ export const createChatEndpoint = async (req: Request, res: Response) => {
       if (id) return id.id;
     });
 
-    const resolvedIds = [...(await Promise.all(ids)), user.id];
+    const resolvedIds = [...(await Promise.all(ids)), userId];
     const existing = await getChatByParticipants(resolvedIds);
-    if (!existing) throw new Error();
 
-    if (existing.length) {
+    if (existing) {
       return res.json({
         error: 'Chat already exists',
-        id: existing[0].id
+        id: existing
       });
     }
-    const chat = await createChat(resolvedIds);
-    users.map((user: string) => {
-      setLastOpened(user, chat?.id);
-    });
-    if (!chat) throw new Error();
-    return res.json({ ok: true, error: null, id: chat[0].id });
+    const chatId = await createChat(resolvedIds);
+    if (!chatId) throw new Error('Failure creating chat');
+
+    return res.json({ ok: true, error: null, id: chatId });
   } catch (error) {
     console.log(error);
   }
@@ -89,16 +77,9 @@ export const getParticipantNames = async (req: Request, res: Response) => {
   const { id } = req.body;
 
   try {
-    const chat = await getChatById(id);
-    if (!chat) return res.json({ participants: [] });
+    const participants = await getParticipantNamesByChatId(id);
 
-    const participants = chat.participants.map(async (participant: number) => {
-      const user = await findById(participant);
-      return { name: user?.name, username: user?.username };
-    });
-
-    const resolvedParticipants = await Promise.all(participants);
-    return res.json({ participants: resolvedParticipants });
+    return res.json({ participants });
   } catch (error) {
     console.log(error);
   }
@@ -108,11 +89,11 @@ export const openChat = async (req: Request, res: Response) => {
   const { chatId } = req.body;
 
   try {
-    const user = await extractUserFromCookie(req);
-    if (!user) {
+    const id = extractUserIdFromCookie(req);
+    if (!id) {
       throw new Error('Invalid token');
     }
-    await setLastOpened(user.username, chatId);
+    await setLastOpened(id, chatId);
 
     res.json({ ok: true });
   } catch (error) {
@@ -122,12 +103,12 @@ export const openChat = async (req: Request, res: Response) => {
 
 export const getNotifications = async (req: Request, res: Response) => {
   try {
-    const user = await extractUserFromCookie(req);
-    if (!user) {
+    const id = extractUserIdFromCookie(req);
+    if (!id) {
       throw new Error('Invalid token');
     }
-    const chats = await getChatsByUser(user.id);
-    const requests = await getRequests(user.username, 'reciever');
+    const chats = await getChatsByUser(id);
+    const requests = await getRequests(id, 'reciever', true);
 
     if (!chats) {
       return res.json({
@@ -139,22 +120,11 @@ export const getNotifications = async (req: Request, res: Response) => {
       });
     }
 
-    const unread = chats.map(async chat => {
-      const unopened = await getUnopened(user.username, chat.id);
-      if (!unopened || unopened.length === 0) return;
-      const obj = {
-        id: chat.id,
-        amount: unopened.length
-      };
-      return obj;
-    });
+    const unopened = await getUnopened(id);
 
-    const resolvedUnread = (await Promise.all(unread)).filter(
-      chat => chat !== undefined
-    );
     return res.json({
       notifications: {
-        Chat: { new: !!resolvedUnread.length, chats: resolvedUnread },
+        Chat: { new: !!unopened.length, chats: unopened },
         Friends: { new: !!requests?.length }
       },
       requests

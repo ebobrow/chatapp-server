@@ -8,30 +8,14 @@ export const signToken = (user: UserEntry) => {
 };
 
 export const checkToken = async (req: Request, res: Response) => {
-  const user = await extractUserFromCookie(req);
+  try {
+    const user = await extractUserFromCookie(req);
 
-  if (!user) return res.json({ ok: false, user: null });
-  return res.json({ ok: true, user });
-
-  // try {
-  //   const token = verify(auth as string, process.env.JWT_SESSION_SECRET!);
-  //   const user = await findById((token as any).userId);
-
-  //   if (!user) {
-  //     return res.json({ ok: false, user: null });
-  //   }
-  //   res.json({
-  //     ok: true,
-  //     user: {
-  //       ...user,
-  //       created_at: formatDate(user.created_at),
-  //       modified_at: formatDate(user.modified_at)
-  //     }
-  //   });
-  // } catch (error) {
-  //   console.log(error);
-  //   res.json({ error, ok: false, user: null });
-  // }
+    if (!user) throw new Error();
+    return res.json({ ok: true, user });
+  } catch (error) {
+    return res.json({ ok: false, user: null });
+  }
 };
 
 export const formatDate = (date: string) => {
@@ -40,12 +24,18 @@ export const formatDate = (date: string) => {
   return realDate.toISOString().split('T')[0];
 };
 
-export const extractUserFromCookie = async (req: Request) => {
+export const extractUserIdFromCookie = (req: Request): number => {
   const token = req.cookies.jid;
 
   const payload: any = decode(token);
+  return payload.userId;
+};
+
+export const extractUserFromCookie = async (req: Request) => {
+  const userId = extractUserIdFromCookie(req);
+
   try {
-    const user = await findById(payload.userId);
+    const user = await findById(userId);
     if (!user) throw new Error('Invalid token');
     return user;
   } catch (error) {

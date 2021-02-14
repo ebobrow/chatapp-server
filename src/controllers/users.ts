@@ -1,17 +1,18 @@
 import { Request, Response } from 'express';
+import { addUser, changePassword, findByUsername, findById } from '../db/users';
 import {
-  addUser,
-  changePassword,
-  findByUsername,
-  findById,
-  addFriend
-} from '../db/users';
-import { checkToken, extractUserFromCookie, signToken } from '../helpers/users';
+  checkToken,
+  extractUserFromCookie,
+  extractUserIdFromCookie,
+  signToken
+} from '../helpers/users';
 import { compare, hash } from 'bcrypt';
 import {
+  acceptRequest,
   createRequest,
   deleteRequest,
   getRequests,
+  getUserFriendNames,
   setRequestsAsSeen
 } from '../db/friends';
 
@@ -54,9 +55,7 @@ export const registerUser = async (req: Request, res: Response) => {
   }
 };
 
-export const token = (req: Request, res: Response) => {
-  checkToken(req, res);
-};
+export const token = checkToken;
 
 export const password = async (req: Request, res: Response) => {
   const { oldPassword, newPassword, newPasswordVerify } = req.body;
@@ -85,19 +84,14 @@ export const password = async (req: Request, res: Response) => {
 
 export const getFriendNames = async (req: Request, res: Response) => {
   try {
-    const user = await extractUserFromCookie(req);
-    if (!user) {
+    const id = extractUserIdFromCookie(req);
+    if (!id) {
       throw new Error('Invalid token');
     }
-    const ids = user.friends;
-    const friends = ids.map(async (id: number) => {
-      const friend = await findById(id);
 
-      return { name: friend?.name, username: friend?.username };
-    });
-    const resolvedFriends = await Promise.all(friends);
+    const friends = await getUserFriendNames(id);
 
-    return res.json({ friends: resolvedFriends });
+    return res.json({ friends });
   } catch (error) {
     console.log(error);
   }
@@ -107,28 +101,48 @@ export const requestFriend = async (req: Request, res: Response) => {
   const { reciever } = req.body;
 
   try {
-    const user = await extractUserFromCookie(req);
-    if (!user) {
+    const id = extractUserIdFromCookie(req);
+    if (!id) {
       throw new Error('Invalid token');
     }
     const friend = await findByUsername(reciever);
     if (!friend) return res.json({ ok: false, error: 'User not found' });
 
-    if (friend.friends.find(f => f === user.id)) {
-      return res.json({ ok: false, error: 'You are already friends' });
-    }
+    const existing = await getRequests(friend.id, 'reciever');
 
-    const existing = await getRequests(reciever, 'reciever');
-
-    if (
-      existing &&
-      existing.find(request => request.sender === user.username)
-    ) {
+    if (existing && existing.find(request => request.sender === id)) {
       return res.json({ ok: false, error: 'Friend already requested' });
     }
 
-    await createRequest(user.username, reciever);
+    await createRequest(id, friend.id);
     res.json({ ok: true });
+  } catch (error) {
+    // TODO: Catch dup_entry error and return 'already requested'
+    console.log(error);
+  }
+};
+
+export const handleRequest = async (req: Request, res: Response) => {
+  const { sender, accept } = req.body;
+
+  try {
+    const id = extractUserIdFromCookie(req);
+    if (!id) {
+      throw new Error('Invalid token');
+    }
+
+    const friend = await findByUsername(sender);
+    if (!friend) {
+      throw new Error('Invalid request');
+    }
+
+    if (!accept) {
+      await deleteRequest(friend.id, id);
+      return res.json({ ok: true });
+    }
+
+    await acceptRequest(friend.id, id);
+    return res.json({ ok: true });
   } catch (error) {
     console.log(error);
   }
@@ -136,11 +150,11 @@ export const requestFriend = async (req: Request, res: Response) => {
 
 export const recievedRequests = async (req: Request, res: Response) => {
   try {
-    const user = await extractUserFromCookie(req);
-    if (!user) {
+    const id = extractUserIdFromCookie(req);
+    if (!id) {
       throw new Error('Invalid token');
     }
-    const requests = await getRequests(user.username, 'reciever');
+    const requests = await getRequests(id, 'reciever');
 
     res.json({ requests });
   } catch (error) {
@@ -148,44 +162,14 @@ export const recievedRequests = async (req: Request, res: Response) => {
   }
 };
 
-export const handleRequest = async (req: Request, res: Response) => {
-  const { reciever, accept } = req.body;
-
-  try {
-    const user = await extractUserFromCookie(req);
-    if (!user || !user.username) {
-      throw new Error('Invalid token');
-    }
-    await deleteRequest(user.username, reciever);
-
-    if (!accept) {
-      return res.json({ ok: true });
-    }
-
-    const senderId = user.id;
-    const recieverUser = await findByUsername(reciever);
-    const recieverId = recieverUser?.id;
-
-    if (!senderId || !recieverId) {
-      return res.json({ ok: false, error: 'User not found' });
-    }
-    await addFriend(senderId, recieverId);
-    await addFriend(recieverId, senderId);
-
-    return res.json({ ok: true, name: recieverUser?.name });
-  } catch (error) {
-    console.log(error);
-  }
-};
-
 export const sentRequests = async (req: Request, res: Response) => {
   try {
-    const user = await extractUserFromCookie(req);
-    if (!user || !user.username) {
+    const id = extractUserIdFromCookie(req);
+    if (!id) {
       throw new Error('Invalid token');
     }
 
-    const requests = await getRequests(user.username, 'sender');
+    const requests = await getRequests(id, 'sender');
 
     res.json({ requests });
   } catch (error) {
@@ -195,11 +179,11 @@ export const sentRequests = async (req: Request, res: Response) => {
 
 export const markAsSeen = async (req: Request, res: Response) => {
   try {
-    const user = await extractUserFromCookie(req);
-    if (!user || !user.username) {
+    const id = extractUserIdFromCookie(req);
+    if (!id) {
       throw new Error('Invalid token');
     }
-    const set = await setRequestsAsSeen(user.username);
+    const set = await setRequestsAsSeen(id);
 
     return res.json({ ok: true, set });
   } catch (error) {

@@ -1,23 +1,35 @@
 CREATE TABLE users (
   id BIGSERIAL NOT NULL PRIMARY KEY,
   name VARCHAR(50) NOT NULL,
-  username text NOT NULL UNIQUE,
-  password text NOT NULL,
-  friends bigint ARRAY,
-  created_at date DEFAULT CURRENT_DATE,
-  modified_at date DEFAULT CURRENT_DATE
+  username TEXT NOT NULL UNIQUE,
+  password TEXT NOT NULL,
+  created_at DATE DEFAULT CURRENT_DATE,
+  modified_at DATE DEFAULT CURRENT_DATE
 );
 
 CREATE TABLE chats (
-  id text NOT NULL,
-  participants text ARRAY NOT NULL,
-  messages jsonb NOT NULL,
-  last_opened jsonb NOT NULL
+  id TEXT NOT NULL PRIMARY KEY
 );
 
-CREATE TABLE friend_requests (
+CREATE TABLE messages (
   id BIGSERIAL NOT NULL PRIMARY KEY,
-  sender text NOT NULL,
-  reciever text NOT NULL,
-  seen boolean DEFAULT FALSE
+  sender BIGINT NOT NULL REFERENCES users(id),
+  message TEXT NOT NULL,
+  sent_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  chat_id TEXT NOT NULL REFERENCES chats(id)
+);
+
+CREATE TABLE chat_to_user (
+  user_id BIGINT NOT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  chat_id TEXT NOT NULL REFERENCES chats(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  last_opened TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT id PRIMARY KEY (user_id, chat_id)
+);
+
+CREATE TABLE friends (
+  sender BIGINT NOT NULL REFERENCES users(id),
+  reciever BIGINT NOT NULL REFERENCES users(id),
+  seen BOOLEAN DEFAULT FALSE,
+  accepted BOOLEAN DEFAULT FALSE,
+  CONSTRAINT friends_id PRIMARY KEY (sender, reciever)
 );

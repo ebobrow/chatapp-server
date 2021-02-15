@@ -23,7 +23,7 @@ export const getChatsByUser = async (id: number) => {
       INNER JOIN chat_to_user conn ON conn.user_id = $1
       LEFT JOIN (
       	SELECT
-          ARRAY_AGG(u.username) AS participants,
+          ARRAY_AGG(u.name) AS participants,
           ctu.chat_id 
       	FROM chat_to_user ctu 
       	LEFT JOIN users u ON u.id = ctu.user_id 

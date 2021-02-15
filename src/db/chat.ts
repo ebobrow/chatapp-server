@@ -18,17 +18,18 @@ export const createChat = async (users: Array<number>) => {
 
 export const getChatsByUser = async (id: number) => {
   const res = await pool.query(
-    `SELECT c.id, participants
-    FROM chats c
-      INNER JOIN chat_to_user conn ON conn.user_id = $1
+    `SELECT ctu.chat_id AS id, participants
+    FROM chat_to_user ctu
       LEFT JOIN (
       	SELECT
           ARRAY_AGG(u.name) AS participants,
-          ctu.chat_id 
-      	FROM chat_to_user ctu 
-      	LEFT JOIN users u ON u.id = ctu.user_id 
-      	GROUP BY ctu.chat_id 
-      ) AS u2 ON u2.chat_id = conn.chat_id 
+          ctu2.chat_id 
+      	FROM chat_to_user ctu2
+      	LEFT JOIN users u ON u.id = ctu2.user_id 
+      	GROUP BY ctu2.chat_id 
+      ) AS u2 ON u2.chat_id = ctu.chat_id 
+      WHERE ctu.user_id = $1
+      ORDER BY ctu.last_opened DESC
       `,
     [id]
   );
@@ -65,21 +66,21 @@ export const getChatByParticipants = async (users: Array<number>) => {
 };
 
 export const getChatById = async (id: number) => {
-  // Is there a way to order by date in the sql query?
   const res = await pool.query(
-    `SELECT c.id, messages
-    FROM chats c
-      INNER JOIN chat_to_user conn ON conn.chat_id = $1
-      LEFT JOIN (
+    `SELECT ctu.chat_id AS id, messages
+    FROM chat_to_user ctu
+      INNER JOIN (
       	SELECT
           m.chat_id,
           ARRAY_AGG(JSON_BUILD_OBJECT('message', m.message,
                                       'sender', u.username,
-                                      'sent_at', m.sent_at)) AS messages
+                                      'sent_at', m.sent_at)
+                                      ORDER BY m.sent_at) AS messages
       	FROM messages m
         LEFT JOIN users u ON u.id = m.sender
       	GROUP BY m.chat_id
-      ) AS m2 on m2.chat_id = conn.chat_id`,
+      ) AS m2 on m2.chat_id = ctu.chat_id
+    WHERE ctu.chat_id = $1`,
     [id]
   );
 

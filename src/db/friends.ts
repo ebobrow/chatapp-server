@@ -12,7 +12,7 @@ export const createRequest = async (sender: number, reciever: number) => {
 export const getRequests = async (
   id: number,
   by: 'sender' | 'reciever',
-  unseen: boolean = false
+  unseen = false
 ) => {
   const opposite = by === 'reciever' ? 'sender' : 'reciever';
 
@@ -28,25 +28,34 @@ export const getRequests = async (
   return res.rows.map(row => row.username);
 };
 
+export const getRequestBySenderAndReceiver = async (
+  sender: number,
+  reciever: number
+) => {
+  const res = await pool.query(
+    'SELECT * FROM friends WHERE sender = $1 AND reciever = $2',
+    [sender, reciever]
+  );
+
+  return res.rows;
+};
+
 export const getUserFriendNames = async (id: number) => {
-  // Is there a way to do this with only one query?
-  const userSent = await pool.query(
+  const res = await pool.query(
     `SELECT f.username, f.name FROM users u
       INNER JOIN friends r ON r.sender = u.id
       LEFT JOIN users f ON f.id = r.reciever
-      WHERE u.id = $1 AND r.accepted = TRUE`,
-    [id]
-  );
-
-  const userRecieved = await pool.query(
-    `SELECT f.username, f.name FROM users u
+      WHERE u.id = $1 AND r.accepted = TRUE
+    UNION
+    SELECT f.username, f.name FROM users u
       INNER JOIN friends r ON r.reciever = u.id
       LEFT JOIN users f ON f.id = r.sender
-      WHERE u.id = $1 AND r.accepted = TRUE`,
+      WHERE u.id = $1 AND r.accepted = TRUE
+    `,
     [id]
   );
 
-  return [...userRecieved.rows, ...userSent.rows];
+  return res.rows;
 };
 
 export const deleteRequest = async (sender: number, reciever: number) => {

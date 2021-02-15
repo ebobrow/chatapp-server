@@ -11,6 +11,7 @@ import {
   acceptRequest,
   createRequest,
   deleteRequest,
+  getRequestBySenderAndReceiver,
   getRequests,
   getUserFriendNames,
   setRequestsAsSeen
@@ -108,16 +109,19 @@ export const requestFriend = async (req: Request, res: Response) => {
     const friend = await findByUsername(reciever);
     if (!friend) return res.json({ ok: false, error: 'User not found' });
 
-    const existing = await getRequests(friend.id, 'reciever');
+    const existing = await getRequestBySenderAndReceiver(friend.id, id);
 
-    if (existing && existing.find(request => request.sender === id)) {
+    if (existing.length) {
       return res.json({ ok: false, error: 'Friend already requested' });
     }
 
     await createRequest(id, friend.id);
     res.json({ ok: true });
   } catch (error) {
-    // TODO: Catch dup_entry error and return 'already requested'
+    // Duplicate key error
+    if (error.code === '23505') {
+      return res.json({ ok: false, error: 'Friend already requested' });
+    }
     console.log(error);
   }
 };

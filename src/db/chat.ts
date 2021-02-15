@@ -1,23 +1,23 @@
-import { pool } from './postgresConfig';
+import { query } from './postgresConfig';
 import { v4 as uuid } from 'uuid';
 
 export const createChat = async (users: Array<number>) => {
   const id = uuid();
 
-  await pool.query('INSERT INTO chats (id) VALUES ($1)', [id]);
+  await query('INSERT INTO chats (id) VALUES ($1)', [id]);
 
   users.forEach(async userId => {
-    await pool.query(
-      'INSERT INTO chat_to_user (user_id, chat_id) VALUES ($1, $2)',
-      [userId, id]
-    );
+    await query('INSERT INTO chat_to_user (user_id, chat_id) VALUES ($1, $2)', [
+      userId,
+      id
+    ]);
   });
 
   return id;
 };
 
 export const getChatsByUser = async (id: number) => {
-  const res = await pool.query(
+  const res = await query(
     `SELECT ctu.chat_id AS id, participants
     FROM chat_to_user ctu
       LEFT JOIN (
@@ -42,7 +42,7 @@ export const addMessageToChat = async (
   sender: number,
   chatId: string
 ) => {
-  const res = await pool.query(
+  const res = await query(
     'INSERT INTO messages (sender, message, chat_id) VALUES ($1, $2, $3) RETURNING *',
     [sender, message, chatId]
   );
@@ -50,7 +50,7 @@ export const addMessageToChat = async (
 };
 
 export const getChatByParticipants = async (users: Array<number>) => {
-  const res = await pool.query(
+  const res = await query(
     `SELECT DISTINCT ctu.chat_id AS id
     FROM chat_to_user ctu
     INNER JOIN (
@@ -66,7 +66,7 @@ export const getChatByParticipants = async (users: Array<number>) => {
 };
 
 export const getChatById = async (id: number) => {
-  const res = await pool.query(
+  const res = await query(
     `SELECT ctu.chat_id AS id, messages
     FROM chat_to_user ctu
       INNER JOIN (
@@ -88,7 +88,7 @@ export const getChatById = async (id: number) => {
 };
 
 export const setLastOpened = async (userId: number, chatId: string) => {
-  const res = await pool.query(
+  const res = await query(
     'UPDATE chat_to_user SET last_opened = CURRENT_TIMESTAMP WHERE user_id = $1 AND chat_id = $2',
     [userId, chatId]
   );
@@ -97,7 +97,7 @@ export const setLastOpened = async (userId: number, chatId: string) => {
 };
 
 export const getUnopened = async (id: number) => {
-  const res = await pool.query(
+  const res = await query(
     `SELECT ctu.chat_id AS id, COUNT(m) AS amount FROM chat_to_user ctu
     INNER JOIN messages m ON m.chat_id = ctu.chat_id
       AND m.sent_at BETWEEN ctu.last_opened AND CURRENT_TIMESTAMP
@@ -110,7 +110,7 @@ export const getUnopened = async (id: number) => {
 };
 
 export const getParticipantNamesByChatId = async (id: string) => {
-  const res = await pool.query(
+  const res = await query(
     `SELECT u.username, u."name" FROM chats c
     LEFT JOIN chat_to_user ctu ON ctu.chat_id = c.id
     LEFT JOIN users u ON u.id = ctu.user_id

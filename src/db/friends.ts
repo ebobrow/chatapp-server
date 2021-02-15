@@ -1,7 +1,7 @@
-import { pool } from './postgresConfig';
+import { query } from './postgresConfig';
 
 export const createRequest = async (sender: number, reciever: number) => {
-  const res = await pool.query(
+  const res = await query(
     'INSERT INTO friends (sender, reciever) VALUES ($1, $2) RETURNING *',
     [sender, reciever]
   );
@@ -16,7 +16,7 @@ export const getRequests = async (
 ) => {
   const opposite = by === 'reciever' ? 'sender' : 'reciever';
 
-  const res = await pool.query(
+  const res = await query(
     `SELECT u.username
     FROM friends
     LEFT JOIN users u ON u.id = ${opposite}
@@ -32,7 +32,7 @@ export const getRequestBySenderAndReceiver = async (
   sender: number,
   reciever: number
 ) => {
-  const res = await pool.query(
+  const res = await query(
     'SELECT * FROM friends WHERE sender = $1 AND reciever = $2',
     [sender, reciever]
   );
@@ -41,7 +41,7 @@ export const getRequestBySenderAndReceiver = async (
 };
 
 export const getUserFriendNames = async (id: number) => {
-  const res = await pool.query(
+  const res = await query(
     `SELECT f.username, f.name FROM users u
       INNER JOIN friends r ON r.sender = u.id
       LEFT JOIN users f ON f.id = r.reciever
@@ -59,7 +59,7 @@ export const getUserFriendNames = async (id: number) => {
 };
 
 export const deleteRequest = async (sender: number, reciever: number) => {
-  const res = await pool.query(
+  const res = await query(
     'DELETE FROM friends WHERE sender = $1 AND reciever = $2',
     [sender, reciever]
   );
@@ -68,7 +68,7 @@ export const deleteRequest = async (sender: number, reciever: number) => {
 };
 
 export const acceptRequest = async (sender: number, reciever: number) => {
-  await pool.query(
+  await query(
     'UPDATE friends SET accepted = TRUE WHERE sender = $1 AND reciever = $2',
     [sender, reciever]
   );
@@ -77,7 +77,7 @@ export const acceptRequest = async (sender: number, reciever: number) => {
 };
 
 export const setRequestsAsSeen = async (recieverId: number) => {
-  const res = await pool.query(
+  const res = await query(
     'UPDATE friends SET seen = TRUE WHERE reciever = $1',
     [recieverId]
   );

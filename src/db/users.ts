@@ -1,11 +1,11 @@
 import { formatDate } from '../helpers/users';
 import { User, UserEntry } from '../types';
-import { pool } from './postgresConfig';
+import { query } from './postgresConfig';
 
 export const findById = async (
   id: number
 ): Promise<UserEntry | null | undefined> => {
-  const user = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+  const user = await query('SELECT * FROM users WHERE id = $1', [id]);
 
   return user.rows.length === 0 ? null : user.rows[0];
 };
@@ -13,7 +13,7 @@ export const findById = async (
 export const findByUsername = async (
   username: string
 ): Promise<UserEntry | null | undefined> => {
-  const user = await pool.query('SELECT * FROM users WHERE username = $1', [
+  const user = await query('SELECT * FROM users WHERE username = $1', [
     username
   ]);
 
@@ -22,7 +22,7 @@ export const findByUsername = async (
 
 export const addUser = async (user: User): Promise<UserEntry | undefined> => {
   const { username, name, password } = user;
-  const res = await pool.query(
+  const res = await query(
     'INSERT INTO users (name, username, password) VALUES ($1, $2, $3) RETURNING *',
     [name, username, password]
   );
@@ -31,7 +31,7 @@ export const addUser = async (user: User): Promise<UserEntry | undefined> => {
 };
 
 export const changePassword = async (userId: number, password: string) => {
-  const res = await pool.query(
+  const res = await query(
     'UPDATE users SET password = $1, modified_at = $2 WHERE id = $3 RETURNING *',
     [password, formatDate(new Date().toISOString()), userId]
   );

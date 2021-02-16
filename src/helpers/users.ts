@@ -28,11 +28,12 @@ export const extractUserIdFromCookie = (req: Request): number => {
   const token = req.cookies.jid;
 
   const payload: any = decode(token);
-  return payload.userId;
+  return payload && payload.userId ? payload.userId : null;
 };
 
 export const extractUserFromCookie = async (req: Request) => {
   const userId = extractUserIdFromCookie(req);
+  if (!userId) return;
 
   try {
     const user = await findById(userId);

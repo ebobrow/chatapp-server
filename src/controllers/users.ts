@@ -16,6 +16,7 @@ import {
   getUserFriendNames,
   setRequestsAsSeen
 } from '../db/friends';
+import { PG_DUP_ENTRY_CODE } from '../constants';
 
 export const loginUser = async (req: Request, res: Response) => {
   const { username, password } = req.body;
@@ -28,7 +29,7 @@ export const loginUser = async (req: Request, res: Response) => {
     }
 
     if (!(await compare(password, (user as any).password))) {
-      return res.json({ errors: [{ message: 'Password incorrect' }] });
+      return res.json({ errors: ['Password incorrect'] });
     }
     res.cookie('jid', signToken(user), { httpOnly: true });
     return res.json({ errors: null, token: signToken(user!) });
@@ -39,20 +40,18 @@ export const loginUser = async (req: Request, res: Response) => {
 };
 
 export const registerUser = async (req: Request, res: Response) => {
-  const { name, username, password, passwordVerify } = req.body;
+  const { name, username, password } = req.body;
 
   try {
-    const userCheck = await findByUsername(username);
-    if (userCheck) {
-      return res.json({ errors: ['Username already in use'] });
-    }
-
     const encryptedPassword = await hash(password, 10);
     const user = await addUser({ name, username, password: encryptedPassword });
     if (!user) throw new Error('Failure adding user');
     res.cookie('jid', signToken(user), { httpOnly: true });
     return res.json({ errors: null, token: signToken(user) });
   } catch (error) {
+    if (error.code === PG_DUP_ENTRY_CODE) {
+      return res.json({ errors: ['Username already in use'] });
+    }
     res.status(500).send(error.message);
     console.log(error);
   }
@@ -61,7 +60,7 @@ export const registerUser = async (req: Request, res: Response) => {
 export const token = checkToken;
 
 export const password = async (req: Request, res: Response) => {
-  const { oldPassword, newPassword, newPasswordVerify } = req.body;
+  const { oldPassword, newPassword } = req.body;
 
   try {
     const user = await extractUserFromCookie(req);
@@ -122,8 +121,7 @@ export const requestFriend = async (req: Request, res: Response) => {
     await createRequest(id, friend.id);
     res.json({ ok: true });
   } catch (error) {
-    // Duplicate key error
-    if (error.code === '23505') {
+    if (error.code === PG_DUP_ENTRY_CODE) {
       return res.json({ ok: false, error: 'Friend already requested' });
     }
     res.status(500).send(error.message);

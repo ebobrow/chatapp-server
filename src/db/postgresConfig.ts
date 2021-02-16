@@ -1,11 +1,6 @@
 import { Pool, QueryArrayResult } from 'pg';
 
-let chalk: any;
-(async () => {
-  if (process.env.NODE_ENV !== 'production') {
-    chalk = await import('chalk');
-  }
-})();
+import chalk from 'chalk';
 
 const pool = new Pool();
 

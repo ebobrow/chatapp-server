@@ -33,6 +33,7 @@ export const loginUser = async (req: Request, res: Response) => {
     res.cookie('jid', signToken(user), { httpOnly: true });
     return res.json({ errors: null, token: signToken(user!) });
   } catch (error) {
+    res.status(500).send(error.message);
     console.log(error);
   }
 };
@@ -52,6 +53,7 @@ export const registerUser = async (req: Request, res: Response) => {
     res.cookie('jid', signToken(user), { httpOnly: true });
     return res.json({ errors: null, token: signToken(user) });
   } catch (error) {
+    res.status(500).send(error.message);
     console.log(error);
   }
 };
@@ -79,6 +81,7 @@ export const password = async (req: Request, res: Response) => {
 
     return res.json({ errors: null });
   } catch (error) {
+    res.status(500).send(error.message);
     console.log(error);
   }
 };
@@ -94,6 +97,7 @@ export const getFriendNames = async (req: Request, res: Response) => {
 
     return res.json({ friends });
   } catch (error) {
+    res.status(500).send(error.message);
     console.log(error);
   }
 };
@@ -122,6 +126,7 @@ export const requestFriend = async (req: Request, res: Response) => {
     if (error.code === '23505') {
       return res.json({ ok: false, error: 'Friend already requested' });
     }
+    res.status(500).send(error.message);
     console.log(error);
   }
 };
@@ -148,6 +153,7 @@ export const handleRequest = async (req: Request, res: Response) => {
     await acceptRequest(friend.id, id);
     return res.json({ ok: true });
   } catch (error) {
+    res.status(500).send(error.message);
     console.log(error);
   }
 };
@@ -162,6 +168,7 @@ export const recievedRequests = async (req: Request, res: Response) => {
 
     res.json({ requests });
   } catch (error) {
+    res.status(500).send(error.message);
     console.log(error);
   }
 };
@@ -177,6 +184,7 @@ export const sentRequests = async (req: Request, res: Response) => {
 
     res.json({ requests });
   } catch (error) {
+    res.status(500).send(error.message);
     console.log(error);
   }
 };
@@ -191,6 +199,7 @@ export const markAsSeen = async (req: Request, res: Response) => {
 
     return res.json({ ok: true, set });
   } catch (error) {
+    res.status(500).send(error.message);
     console.log(error);
   }
 };

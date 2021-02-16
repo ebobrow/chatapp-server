@@ -24,6 +24,7 @@ export const getChats = async (req: Request, res: Response) => {
 
     res.json({ chats });
   } catch (error) {
+    res.status(500).send(error.message);
     console.log(error);
   }
 };
@@ -56,6 +57,7 @@ export const createChatEndpoint = async (req: Request, res: Response) => {
 
     return res.json({ ok: true, error: null, id: chatId });
   } catch (error) {
+    res.status(500).send(error.message);
     console.log(error);
   }
 };
@@ -69,6 +71,7 @@ export const getChatMessages = async (req: Request, res: Response) => {
 
     return res.json({ messages: chat.messages });
   } catch (error) {
+    res.status(500).send(error.message);
     console.log(error);
   }
 };
@@ -81,6 +84,7 @@ export const getParticipantNames = async (req: Request, res: Response) => {
 
     return res.json({ participants });
   } catch (error) {
+    res.status(500).send(error.message);
     console.log(error);
   }
 };
@@ -97,6 +101,7 @@ export const openChat = async (req: Request, res: Response) => {
 
     res.json({ ok: true });
   } catch (error) {
+    res.status(500).send(error.message);
     console.log(error);
   }
 };
@@ -130,6 +135,7 @@ export const getNotifications = async (req: Request, res: Response) => {
       requests
     });
   } catch (error) {
+    res.status(500).send(error.message);
     console.log(error);
   }
 };

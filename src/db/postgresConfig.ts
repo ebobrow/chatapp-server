@@ -3,14 +3,17 @@ import chalk from 'chalk';
 
 const pool = new Pool();
 
-// Probably very slow but it's only for development
 const parseLog = (sql: string) =>
   sql
-    .split('')
-    .map(char => (/[A-Z]/.test(char) ? chalk.blue(char) : char))
-    .join('')
     .split(' ')
-    .map(word => (word.startsWith('$') ? chalk.green(word) : word))
+    .map(word =>
+      word.startsWith('$')
+        ? chalk.green(word)
+        : word
+            .split('')
+            .map(char => (/[A-Z]/.test(char) ? chalk.blue(char) : char))
+            .join('')
+    )
     .join(' ');
 
 export const query = async (

@@ -1,7 +1,7 @@
 import { query } from './postgresConfig';
 import { v4 as uuid } from 'uuid';
 
-export const createChat = async (users: Array<number>) => {
+export const createChat = async (users: number[]) => {
   const id = uuid();
 
   await query('INSERT INTO chats (id) VALUES ($1)', [id]);
@@ -49,7 +49,7 @@ export const addMessageToChat = async (
   return res.rows;
 };
 
-export const getChatByParticipants = async (users: Array<number>) => {
+export const getChatByParticipants = async (users: number[]) => {
   const res = await query(
     `SELECT DISTINCT ctu.chat_id AS id
     FROM chat_to_user ctu

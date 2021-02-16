@@ -37,7 +37,7 @@ export const createChatEndpoint = async (req: Request, res: Response) => {
     if (!userId) {
       throw new Error('Invalid token');
     }
-    const ids: Array<number> = users.map(async (user: string) => {
+    const ids: number[] = users.map(async (user: string) => {
       const id = await findByUsername(user);
 
       if (id) return id.id;

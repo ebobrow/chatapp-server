@@ -1,10 +1,16 @@
 import { Pool, QueryArrayResult } from 'pg';
-import chalk from 'chalk';
+
+let chalk: any;
+(async () => {
+  if (process.env.NODE_ENV !== 'production') {
+    chalk = await import('chalk');
+  }
+})();
 
 const pool = new Pool();
 
-const parseLog = (sql: string) =>
-  sql
+const parseLog = (sql: string) => {
+  return sql
     .split(' ')
     .map(word =>
       word.startsWith('$')
@@ -15,6 +21,7 @@ const parseLog = (sql: string) =>
             .join('')
     )
     .join(' ');
+};
 
 export const query = async (
   query: string,

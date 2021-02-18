@@ -1,4 +1,5 @@
 import e, { Request, Response } from 'express';
+import { MESSAGES_QUERY_BATCH_SIZE } from '../constants';
 import {
   getChatsByUser,
   createChat,
@@ -8,7 +9,8 @@ import {
   setLastOpened,
   getParticipantNamesByChatId,
   getChatNameById,
-  setChatNameById
+  setChatNameById,
+  getNumMessages
 } from '../db/chat';
 import { getRequests } from '../db/friends';
 import { findByUsername } from '../db/users';
@@ -65,13 +67,23 @@ export const createChatEndpoint = async (req: Request, res: Response) => {
 };
 
 export const getChatMessages = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id, cursor } = req.query;
 
   try {
-    const chat = await getChatMessagesById(id);
+    const offset = cursor
+      ? parseInt(cursor as string)
+      : await getNumMessages(id as string);
+    console.log(offset);
+
+    const chat = await getChatMessagesById(id as string, offset);
     if (!chat) return res.json({ messages: [] });
 
-    return res.json({ messages: chat.messages });
+    const nextCursor = offset - MESSAGES_QUERY_BATCH_SIZE - 1;
+
+    return res.json({
+      messages: chat.messages,
+      nextCursor: nextCursor >= 0 ? nextCursor : null
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
     console.log(error);

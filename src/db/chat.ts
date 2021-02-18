@@ -1,5 +1,6 @@
 import { query } from './postgresConfig';
 import { v4 as uuid } from 'uuid';
+import { MESSAGES_QUERY_BATCH_SIZE } from '../constants';
 
 export const createChat = async (users: number[]) => {
   const id = uuid();
@@ -66,17 +67,29 @@ export const getChatByParticipants = async (users: number[]) => {
   return res.rows[0] ? res.rows[0].id : undefined;
 };
 
-export const getChatMessagesById = async (id: string) => {
+export const getNumMessages = async (id: string) => {
+  const res = await query('SELECT COUNT(*) FROM messages WHERE chat_id = $1', [
+    id
+  ]);
+
+  return res.rows[0].count;
+};
+
+export const getChatMessagesById = async (id: string, cursor: number) => {
+  const start = cursor - MESSAGES_QUERY_BATCH_SIZE;
+
   const res = await query(
     `SELECT ctu.chat_id AS id, messages
     FROM chat_to_user ctu
       INNER JOIN (
       	SELECT
           m.chat_id,
-          ARRAY_AGG(JSON_BUILD_OBJECT('message', m.message,
-                                      'sender', u.username,
-                                      'sent_at', m.sent_at)
-                                      ORDER BY m.sent_at) AS messages
+          (ARRAY_AGG(JSON_BUILD_OBJECT(
+              'message', m.message,
+              'sender', u.username,
+              'sent_at', m.sent_at)
+            ORDER BY m.sent_at))[${start}:${cursor}]
+          AS messages
       	FROM messages m
         LEFT JOIN users u ON u.id = m.sender
       	GROUP BY m.chat_id

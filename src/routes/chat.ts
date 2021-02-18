@@ -13,7 +13,7 @@ import {
 const router = Router();
 
 router.get('/', getChats);
-router.get('/messages/:id', getChatMessages);
+router.get('/messages', getChatMessages);
 router.get('/participants/:id', getParticipantNames);
 router.get('/notifications', getNotifications);
 router.get('/name/:id', getChatName);

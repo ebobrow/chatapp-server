@@ -112,7 +112,12 @@ export const getNotifications = async (req: Request, res: Response) => {
   try {
     const id = extractUserIdFromCookie(req);
     if (!id) {
-      throw new Error('Invalid token');
+      return res.json({
+        notifications: [
+          { name: 'Chat', new: false, chats: [] },
+          { name: 'Friends', new: false }
+        ]
+      });
     }
     const chats = await getChatsByUser(id);
     const requests = await getRequests(id, 'reciever', true);

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { decode, sign, verify } from 'jsonwebtoken';
+import { decode, sign } from 'jsonwebtoken';
 import { findById } from '../db/users';
 import { UserEntry } from '../types';
 
@@ -37,7 +37,6 @@ export const extractUserFromCookie = async (req: Request) => {
 
   try {
     const user = await findById(userId);
-    if (!user) throw new Error('Invalid token');
     return user;
   } catch (error) {
     console.log(error);

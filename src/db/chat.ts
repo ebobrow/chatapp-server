@@ -18,8 +18,9 @@ export const createChat = async (users: number[]) => {
 
 export const getChatsByUser = async (id: number) => {
   const res = await query(
-    `SELECT ctu.chat_id AS id, participants
-    FROM chat_to_user ctu
+    `SELECT c.id, participants, c.name
+    FROM chats c
+    INNER JOIN chat_to_user ctu ON ctu.chat_id = c.id
       LEFT JOIN (
       	SELECT
           ARRAY_AGG(u.name) AS participants,
@@ -27,8 +28,8 @@ export const getChatsByUser = async (id: number) => {
       	FROM chat_to_user ctu2
       	LEFT JOIN users u ON u.id = ctu2.user_id 
       	GROUP BY ctu2.chat_id 
-      ) AS u2 ON u2.chat_id = ctu.chat_id 
-      WHERE ctu.user_id = $1
+      ) AS u2 ON u2.chat_id = c.id
+      WHERE ctu.user_id = 1
       ORDER BY ctu.last_opened DESC
       `,
     [id]

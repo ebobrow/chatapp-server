@@ -14,7 +14,7 @@ export const checkToken = async (req: Request, res: Response) => {
     if (!user) throw new Error();
     return res.json({ ok: true, user });
   } catch (error) {
-    return res.json({ ok: false, user: null });
+    return res.status(401).json({ error: 'Invalid token' });
   }
 };
 

@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { json, Request, Response } from 'express';
 import { addUser, changePassword, findByUsername, findById } from '../db/users';
 import {
   checkToken,
@@ -21,20 +21,19 @@ import { PG_DUP_ENTRY_CODE } from '../constants';
 export const loginUser = async (req: Request, res: Response) => {
   const { username, password } = req.body;
 
-  // User exists?
   try {
     const user = await findByUsername(username);
     if (!user) {
-      return res.json({ errors: ['User not found'] });
+      return res.status(400).json({ error: 'User not found' });
     }
 
     if (!(await compare(password, (user as any).password))) {
-      return res.json({ errors: ['Password incorrect'] });
+      return res.status(400).json({ error: 'Password incorrect' });
     }
     res.cookie('jid', signToken(user), { httpOnly: true });
     return res.json({ errors: null, token: signToken(user!) });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ error: error.message });
     console.log(error);
   }
 };
@@ -46,13 +45,14 @@ export const registerUser = async (req: Request, res: Response) => {
     const encryptedPassword = await hash(password, 10);
     const user = await addUser({ name, username, password: encryptedPassword });
     if (!user) throw new Error('Failure adding user');
+
     res.cookie('jid', signToken(user), { httpOnly: true });
-    return res.json({ errors: null, token: signToken(user) });
+    return res.json({ ok: true });
   } catch (error) {
     if (error.code === PG_DUP_ENTRY_CODE) {
-      return res.json({ errors: ['Username already in use'] });
+      return res.status(400).json({ error: 'Username already in use' });
     }
-    res.status(500).send(error.message);
+    res.status(500).json({ error: error.message });
     console.log(error);
   }
 };
@@ -68,10 +68,11 @@ export const password = async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Invalid token' });
     }
     const userCheck = await findById(user.id);
-    if (!userCheck) return res.json({ errors: ['User does not exist'] });
+    if (!userCheck)
+      return res.status(400).json({ error: 'User does not exist' });
 
     if (!(await compare(oldPassword, userCheck.password))) {
-      return res.json({ errors: ['Password incorrect'] });
+      return res.status(400).json({ error: 'Password incorrect' });
     }
 
     const newUser = await changePassword(user.id, await hash(newPassword, 10));
@@ -80,7 +81,7 @@ export const password = async (req: Request, res: Response) => {
 
     return res.json({ errors: null });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ error: error.message });
     console.log(error);
   }
 };
@@ -96,7 +97,7 @@ export const getFriendNames = async (req: Request, res: Response) => {
 
     return res.json({ friends });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ error: error.message });
     console.log(error);
   }
 };
@@ -110,21 +111,21 @@ export const requestFriend = async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Invalid token' });
     }
     const friend = await findByUsername(reciever);
-    if (!friend) return res.json({ ok: false, error: 'User not found' });
+    if (!friend) return res.status(400).json({ error: 'User not found' });
 
     const existing = await getRequestBySenderAndReceiver(friend.id, id);
 
     if (existing.length) {
-      return res.json({ ok: false, error: 'Friend already requested' });
+      return res.status(400).json({ error: 'Friend already requested' });
     }
 
     await createRequest(id, friend.id);
     res.json({ ok: true });
   } catch (error) {
     if (error.code === PG_DUP_ENTRY_CODE) {
-      return res.json({ ok: false, error: 'Friend already requested' });
+      return res.status(400).json({ error: 'Friend already requested' });
     }
-    res.status(500).send(error.message);
+    res.status(500).json({ error: error.message });
     console.log(error);
   }
 };
@@ -140,7 +141,7 @@ export const handleRequest = async (req: Request, res: Response) => {
 
     const friend = await findByUsername(sender);
     if (!friend) {
-      throw new Error('Invalid request');
+      return res.status(400).json({ error: 'Friend not found' });
     }
 
     if (!accept) {
@@ -151,7 +152,7 @@ export const handleRequest = async (req: Request, res: Response) => {
     await acceptRequest(friend.id, id);
     return res.json({ ok: true });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ error: error.message });
     console.log(error);
   }
 };
@@ -166,7 +167,7 @@ export const recievedRequests = async (req: Request, res: Response) => {
 
     res.json({ requests });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ error: error.message });
     console.log(error);
   }
 };
@@ -182,7 +183,7 @@ export const sentRequests = async (req: Request, res: Response) => {
 
     res.json({ requests });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ error: error.message });
     console.log(error);
   }
 };
@@ -197,7 +198,7 @@ export const markAsSeen = async (req: Request, res: Response) => {
 
     return res.json({ ok: true, set });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ error: error.message });
     console.log(error);
   }
 };

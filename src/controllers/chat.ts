@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import e, { Request, Response } from 'express';
 import {
   getChatsByUser,
   createChat,
@@ -26,7 +26,7 @@ export const getChats = async (req: Request, res: Response) => {
 
     res.json({ chats });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ error: error.message });
     console.log(error);
   }
 };
@@ -49,7 +49,7 @@ export const createChatEndpoint = async (req: Request, res: Response) => {
     const existing = await getChatByParticipants(resolvedIds);
 
     if (existing) {
-      return res.json({
+      return res.status(400).json({
         error: 'Chat already exists',
         id: existing
       });
@@ -59,7 +59,7 @@ export const createChatEndpoint = async (req: Request, res: Response) => {
 
     return res.json({ ok: true, error: null, id: chatId });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ error: error.message });
     console.log(error);
   }
 };
@@ -73,7 +73,7 @@ export const getChatMessages = async (req: Request, res: Response) => {
 
     return res.json({ messages: chat.messages });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ error: error.message });
     console.log(error);
   }
 };
@@ -86,7 +86,7 @@ export const getParticipantNames = async (req: Request, res: Response) => {
 
     return res.json({ participants });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ error: error.message });
     console.log(error);
   }
 };
@@ -103,7 +103,7 @@ export const openChat = async (req: Request, res: Response) => {
 
     res.json({ ok: true });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ error: error.message });
     console.log(error);
   }
 };
@@ -142,7 +142,7 @@ export const getNotifications = async (req: Request, res: Response) => {
       requests
     });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ error: error.message });
     console.log(error);
   }
 };
@@ -153,11 +153,13 @@ export const getChatName = async (req: Request, res: Response) => {
   try {
     const name = await getChatNameById(id);
 
-    console.log(name.name);
+    if (!name) {
+      return res.status(400).json({ error: 'Chat not found' });
+    }
 
     res.send(name.name);
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ error: error.message });
     console.log(error);
   }
 };
@@ -171,7 +173,7 @@ export const setChatName = async (req: Request, res: Response) => {
 
     res.json({ ok: true });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ error: error.message });
     console.log(error);
   }
 };

@@ -25,7 +25,7 @@ export const query = async (
   const res = await pool.query(query, params);
 
   if (process.env.NODE_ENV !== 'production') {
-    console.log(parseLog(query), params);
+    // console.log(parseLog(query), params);
   }
 
   return res;

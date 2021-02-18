@@ -66,7 +66,7 @@ export const getChatByParticipants = async (users: number[]) => {
   return res.rows[0] ? res.rows[0].id : undefined;
 };
 
-export const getChatParticipantsById = async (id: number) => {
+export const getChatMessagesById = async (id: string) => {
   const res = await query(
     `SELECT ctu.chat_id AS id, messages
     FROM chat_to_user ctu

@@ -3,7 +3,7 @@ import {
   getChatsByUser,
   createChat,
   getChatByParticipants,
-  getChatParticipantsById,
+  getChatMessagesById,
   getUnopened,
   setLastOpened,
   getParticipantNamesByChatId,
@@ -65,10 +65,10 @@ export const createChatEndpoint = async (req: Request, res: Response) => {
 };
 
 export const getChatMessages = async (req: Request, res: Response) => {
-  const { id } = req.body;
+  const { id } = req.params;
 
   try {
-    const chat = await getChatParticipantsById(id);
+    const chat = await getChatMessagesById(id);
     if (!chat) return res.json({ messages: [] });
 
     return res.json({ messages: chat.messages });
@@ -79,7 +79,7 @@ export const getChatMessages = async (req: Request, res: Response) => {
 };
 
 export const getParticipantNames = async (req: Request, res: Response) => {
-  const { id } = req.body;
+  const { id } = req.params;
 
   try {
     const participants = await getParticipantNamesByChatId(id);
@@ -160,7 +160,6 @@ export const getChatName = async (req: Request, res: Response) => {
 export const setChatName = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { name } = req.body;
-  console.log(id, name);
 
   try {
     await setChatNameById(id, name);

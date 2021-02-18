@@ -12,13 +12,15 @@ import {
 
 const router = Router();
 
-router.get('/chats', getChats);
-router.post('/createchat', createChatEndpoint);
-router.post('/getmessages', getChatMessages);
-router.post('/getparticipants', getParticipantNames);
-router.post('/setopen', openChat);
+router.get('/', getChats);
+router.get('/messages/:id', getChatMessages);
+router.get('/participants/:id', getParticipantNames);
 router.get('/notifications', getNotifications);
 router.get('/name/:id', getChatName);
+
+router.post('/', createChatEndpoint);
+
+router.put('/lastseen', openChat);
 router.put('/name/:id', setChatName);
 
 export default router;

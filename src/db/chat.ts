@@ -65,7 +65,7 @@ export const getChatByParticipants = async (users: number[]) => {
   return res.rows[0] ? res.rows[0].id : undefined;
 };
 
-export const getChatById = async (id: number) => {
+export const getChatParticipantsById = async (id: number) => {
   const res = await query(
     `SELECT ctu.chat_id AS id, messages
     FROM chat_to_user ctu
@@ -117,6 +117,21 @@ export const getParticipantNamesByChatId = async (id: string) => {
     WHERE c.id = $1`,
     [id]
   );
+
+  return res.rows;
+};
+
+export const getChatNameById = async (id: string) => {
+  const res = await query('SELECT name FROM chats WHERE id = $1', [id]);
+
+  return res.rows[0];
+};
+
+export const setChatNameById = async (id: string, name: string) => {
+  const res = await query('UPDATE chats SET name = $1 WHERE id = $2', [
+    name,
+    id
+  ]);
 
   return res.rows;
 };

@@ -3,10 +3,12 @@ import {
   getChatsByUser,
   createChat,
   getChatByParticipants,
-  getChatById,
+  getChatParticipantsById,
   getUnopened,
   setLastOpened,
-  getParticipantNamesByChatId
+  getParticipantNamesByChatId,
+  getChatNameById,
+  setChatNameById
 } from '../db/chat';
 import { getRequests } from '../db/friends';
 import { findByUsername } from '../db/users';
@@ -66,7 +68,7 @@ export const getChatMessages = async (req: Request, res: Response) => {
   const { id } = req.body;
 
   try {
-    const chat = await getChatById(id);
+    const chat = await getChatParticipantsById(id);
     if (!chat) return res.json({ messages: [] });
 
     return res.json({ messages: chat.messages });
@@ -134,6 +136,36 @@ export const getNotifications = async (req: Request, res: Response) => {
       },
       requests
     });
+  } catch (error) {
+    res.status(500).send(error.message);
+    console.log(error);
+  }
+};
+
+export const getChatName = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const name = await getChatNameById(id);
+
+    console.log(name.name);
+
+    res.send(name.name);
+  } catch (error) {
+    res.status(500).send(error.message);
+    console.log(error);
+  }
+};
+
+export const setChatName = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { name } = req.body;
+  console.log(id, name);
+
+  try {
+    await setChatNameById(id, name);
+
+    res.json({ ok: true });
   } catch (error) {
     res.status(500).send(error.message);
     console.log(error);

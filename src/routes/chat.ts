@@ -5,7 +5,9 @@ import {
   getChatMessages,
   getParticipantNames,
   openChat,
-  getNotifications
+  getNotifications,
+  getChatName,
+  setChatName
 } from '../controllers/chat';
 
 const router = Router();
@@ -16,5 +18,7 @@ router.post('/getmessages', getChatMessages);
 router.post('/getparticipants', getParticipantNames);
 router.post('/setopen', openChat);
 router.get('/notifications', getNotifications);
+router.get('/name/:id', getChatName);
+router.put('/name/:id', setChatName);
 
 export default router;

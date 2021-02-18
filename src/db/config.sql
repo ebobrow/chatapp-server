@@ -8,7 +8,8 @@ CREATE TABLE users (
 );
 
 CREATE TABLE chats (
-  id TEXT NOT NULL PRIMARY KEY
+  id TEXT NOT NULL PRIMARY KEY,
+  name VARCHAR(255)
 );
 
 CREATE TABLE messages (

@@ -65,7 +65,7 @@ export const password = async (req: Request, res: Response) => {
   try {
     const user = await extractUserFromCookie(req);
     if (!user) {
-      throw new Error('Invalid token');
+      return res.status(401).json({ error: 'Invalid token' });
     }
     const userCheck = await findById(user.id);
     if (!userCheck) return res.json({ errors: ['User does not exist'] });
@@ -89,7 +89,7 @@ export const getFriendNames = async (req: Request, res: Response) => {
   try {
     const id = extractUserIdFromCookie(req);
     if (!id) {
-      throw new Error('Invalid token');
+      return res.status(401).json({ error: 'Invalid token' });
     }
 
     const friends = await getUserFriendNames(id);
@@ -107,7 +107,7 @@ export const requestFriend = async (req: Request, res: Response) => {
   try {
     const id = extractUserIdFromCookie(req);
     if (!id) {
-      throw new Error('Invalid token');
+      return res.status(401).json({ error: 'Invalid token' });
     }
     const friend = await findByUsername(reciever);
     if (!friend) return res.json({ ok: false, error: 'User not found' });
@@ -135,7 +135,7 @@ export const handleRequest = async (req: Request, res: Response) => {
   try {
     const id = extractUserIdFromCookie(req);
     if (!id) {
-      throw new Error('Invalid token');
+      return res.status(401).json({ error: 'Invalid token' });
     }
 
     const friend = await findByUsername(sender);
@@ -160,7 +160,7 @@ export const recievedRequests = async (req: Request, res: Response) => {
   try {
     const id = extractUserIdFromCookie(req);
     if (!id) {
-      throw new Error('Invalid token');
+      return res.status(401).json({ error: 'Invalid token' });
     }
     const requests = await getRequests(id, 'reciever');
 
@@ -175,7 +175,7 @@ export const sentRequests = async (req: Request, res: Response) => {
   try {
     const id = extractUserIdFromCookie(req);
     if (!id) {
-      throw new Error('Invalid token');
+      return res.status(401).json({ error: 'Invalid token' });
     }
 
     const requests = await getRequests(id, 'sender');
@@ -191,7 +191,7 @@ export const markAsSeen = async (req: Request, res: Response) => {
   try {
     const id = extractUserIdFromCookie(req);
     if (!id) {
-      throw new Error('Invalid token');
+      return res.status(401).json({ error: 'Invalid token' });
     }
     const set = await setRequestsAsSeen(id);
 

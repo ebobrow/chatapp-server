@@ -18,7 +18,7 @@ export const getChats = async (req: Request, res: Response) => {
   try {
     const id = extractUserIdFromCookie(req);
     if (!id) {
-      throw new Error('Invalid token');
+      return res.status(401).json({ error: 'Invalid token' });
     }
     const chats = await getChatsByUser(id);
 
@@ -37,7 +37,7 @@ export const createChatEndpoint = async (req: Request, res: Response) => {
   try {
     const userId = extractUserIdFromCookie(req);
     if (!userId) {
-      throw new Error('Invalid token');
+      return res.status(401).json({ error: 'Invalid token' });
     }
     const ids: number[] = users.map(async (user: string) => {
       const id = await findByUsername(user);
@@ -97,7 +97,7 @@ export const openChat = async (req: Request, res: Response) => {
   try {
     const id = extractUserIdFromCookie(req);
     if (!id) {
-      throw new Error('Invalid token');
+      return res.status(401).json({ error: 'Invalid token' });
     }
     await setLastOpened(id, chatId);
 

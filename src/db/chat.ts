@@ -29,7 +29,7 @@ export const getChatsByUser = async (id: number) => {
       	LEFT JOIN users u ON u.id = ctu2.user_id 
       	GROUP BY ctu2.chat_id 
       ) AS u2 ON u2.chat_id = c.id
-      WHERE ctu.user_id = 1
+      WHERE ctu.user_id = $1
       ORDER BY ctu.last_opened DESC
       `,
     [id]

@@ -10,7 +10,8 @@ import {
   requestFriend,
   sentRequests,
   markAsSeen,
-  logOut
+  logOut,
+  deleteFriend
 } from '../controllers/users';
 
 const router = Router();
@@ -28,5 +29,7 @@ router.post('/friends/request', requestFriend);
 router.put('/password', password);
 router.put('/friends/accept', handleRequest);
 router.put('/friends/seen', markAsSeen);
+
+router.delete('/friends/:username', deleteFriend);
 
 export default router;

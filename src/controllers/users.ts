@@ -14,6 +14,7 @@ import {
   getRequestBySenderAndReceiver,
   getRequests,
   getUserFriendNames,
+  removeFriend,
   setRequestsAsSeen
 } from '../db/friends';
 import { PG_DUP_ENTRY_CODE } from '../constants';
@@ -206,4 +207,21 @@ export const markAsSeen = async (req: Request, res: Response) => {
 export const logOut = (_: Request, res: Response) => {
   res.clearCookie('jid', { httpOnly: true });
   return res.json({ ok: true });
+};
+
+export const deleteFriend = async (req: Request, res: Response) => {
+  const { username } = req.params;
+
+  try {
+    const user = await extractUserFromCookie(req);
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    await removeFriend(username, user.username);
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+    console.log(error);
+  }
 };

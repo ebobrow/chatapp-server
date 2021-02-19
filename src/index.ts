@@ -3,6 +3,7 @@ import morgan from 'morgan';
 import cors from 'cors';
 import authRoutes from './routes/users';
 import chatRoutes from './routes/chat';
+import friendRoutes from './routes/friends';
 import { Server } from 'socket.io';
 import http from 'http';
 import { CORS_ORIGIN } from './constants';
@@ -28,6 +29,7 @@ app.use(cookieparser());
 
 app.use('/auth', authRoutes);
 app.use('/chat', chatRoutes);
+app.use('/friends', friendRoutes);
 
 server.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);

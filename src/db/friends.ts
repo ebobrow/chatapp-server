@@ -85,25 +85,12 @@ export const setRequestsAsSeen = async (recieverId: number) => {
   return res.rows;
 };
 
-export const removeFriend = async (user: string, friend: string) => {
-  // Bad?
-  const reqToDelete = await query(
-    `SELECT sender, reciever FROM friends f
-    INNER JOIN users u1 ON u1.id = f.sender
-    INNER JOIN users u2 ON u2.id = f.reciever
-    WHERE (u1.username = $1 AND u2.username = $2)
-      OR (u1.username = $2 AND u2.username = $1)`,
-    [user, friend]
-  );
-
-  if (!reqToDelete.rows.length) throw new Error('Request not found');
-  console.log(reqToDelete.rows);
-
-  const { sender, reciever } = reqToDelete.rows[0];
-
+export const removeFriend = async (user1: number, user2: number) => {
   const res = await query(
-    'DELETE FROM friends WHERE sender = $1 AND reciever = $2',
-    [sender, reciever]
+    `DELETE FROM friends f
+    WHERE (sender = $1 AND reciever = $2)
+      OR (reciever = $2 AND sender = $1)`,
+    [user1, user2]
   );
 
   return res.rows;

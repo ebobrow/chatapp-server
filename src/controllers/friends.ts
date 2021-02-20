@@ -137,12 +137,12 @@ export const deleteFriend = async (req: Request, res: Response) => {
   const { username } = req.params;
 
   try {
-    const user = await extractUserFromCookie(req);
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid token' });
-    }
+    const userId = extractUserIdFromCookie(req);
 
-    await removeFriend(username, user.username);
+    const friend = await findByUsername(username);
+    if (!friend) throw new Error('Friend not found');
+
+    await removeFriend(userId, friend.id);
     res.json({ ok: true });
   } catch (error) {
     res.status(500).json({ error: error.message });

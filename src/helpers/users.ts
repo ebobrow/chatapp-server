@@ -7,17 +7,6 @@ export const signToken = (user: UserEntry) => {
   return sign({ userId: user.id }, process.env.JWT_SESSION_SECRET!);
 };
 
-export const checkToken = async (req: Request, res: Response) => {
-  try {
-    const user = await extractUserFromCookie(req);
-
-    if (!user) throw new Error();
-    return res.json({ ok: true, user });
-  } catch (error) {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
-};
-
 export const formatDate = (date: string) => {
   const realDate = new Date(date);
 

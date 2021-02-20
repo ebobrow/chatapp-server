@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { addUser, changePassword, findByUsername, findById } from '../db/users';
-import { checkToken, extractUserFromCookie, signToken } from '../helpers/users';
+import { extractUserFromCookie, signToken } from '../helpers/users';
 import { compare, hash } from 'bcrypt';
 import { PG_DUP_ENTRY_CODE } from '../constants';
 
@@ -43,7 +43,16 @@ export const registerUser = async (req: Request, res: Response) => {
   }
 };
 
-export const token = checkToken;
+export const token = async (req: Request, res: Response) => {
+  try {
+    const user = await extractUserFromCookie(req);
+
+    if (!user) throw new Error();
+    return res.json({ ok: true, user });
+  } catch (error) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+};
 
 export const password = async (req: Request, res: Response) => {
   const { oldPassword, newPassword } = req.body;

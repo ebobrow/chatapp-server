@@ -11,10 +11,7 @@ import {
   removeFriend
 } from '../db/friends';
 import { findByUsername } from '../db/users';
-import {
-  extractUserIdFromCookie,
-  extractUserFromCookie
-} from '../helpers/users';
+import { extractUserIdFromCookie } from '../helpers/users';
 
 export const getFriendNames = async (req: Request, res: Response) => {
   try {

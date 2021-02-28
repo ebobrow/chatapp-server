@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: chat_app
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+      - ./src/db:/docker-entrypoint-initdb.d
+    ports:
+      - '5432:5432'
+  server:
+    image: ebobrow/chat-app-server
+    depends_on:
+      - db
+    ports:
+      - '4000:4000'
+    env_file:
+      - docker.env

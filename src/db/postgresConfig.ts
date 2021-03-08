@@ -2,23 +2,7 @@ import { Pool, QueryArrayResult } from 'pg';
 
 import chalk from 'chalk';
 
-let retries = 5;
-let pool: Pool;
-
-(async () => {
-  while (retries) {
-    try {
-      pool = new Pool();
-      await pool.query('SELECT * FROM users');
-      console.log('Db connected!');
-      break;
-    } catch (error) {
-      console.log(error);
-      await new Promise(res => setTimeout(res, 1000));
-      retries--;
-    }
-  }
-})();
+const pool = new Pool();
 
 const parseLog = (sql: string) => {
   return sql
